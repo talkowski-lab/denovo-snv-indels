@@ -1,3 +1,13 @@
+###
+# Adapted from Kyle Satterstrom's code.
+
+## CHANGE LOG:
+'''
+3/20/2025:
+- changed AC/AN annotations in sex_aware_variant_annotations_with_pHWE to sex_aware_AC/sex_aware_AN
+'''
+###
+
 import datetime
 import pandas as pd
 import hail as hl
@@ -163,11 +173,11 @@ def sex_aware_variant_annotations_with_pHWE(mt):
             .when(mt.locus.in_y_nonpar(), (mt.male_calls / num_males))
             .when(mt.locus.in_x_nonpar(), (mt.male_calls + 2*mt.female_calls) / (num_males + 2*num_females))
             .default((mt.male_calls + mt.female_calls) / (num_males + num_females)) ),
-        AC = ( hl.case()
+        sex_aware_AC = ( hl.case()
             .when(mt.locus.in_y_nonpar(), mt.male_homvars)
             .when(mt.locus.in_x_nonpar(), mt.male_homvars + mt.female_hets + 2*mt.female_homvars)
             .default(mt.male_hets + 2*mt.male_homvars + mt.female_hets + 2*mt.female_homvars) ),
-        AN = ( hl.case()
+        sex_aware_AN = ( hl.case()
             .when(mt.locus.in_y_nonpar(), mt.male_calls)
             .when(mt.locus.in_x_nonpar(), mt.male_calls + 2*mt.female_calls)
             .default(2*mt.male_calls + 2*mt.female_calls) ),

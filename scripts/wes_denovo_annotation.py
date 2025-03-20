@@ -1,3 +1,13 @@
+###
+# Adapted from Kyle Satterstrom's code.
+
+## CHANGE LOG:
+'''
+3/20/2025:
+- commented out MPC annotation (done upstream in vep-annotate-hail-extra-{version})
+'''
+###
+
 import datetime
 import pandas as pd
 import hail as hl
@@ -39,8 +49,8 @@ mt = mt.annotate_rows(gnomad_non_neuro_AF =
                       gnomad_ht.index(mt.row_key).freq[hl.eval(gnomad_ht.freq_index_dict["non_neuro"])].AF)
 
 ## MPC annotations
-mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
-mt = mt.annotate_rows(MPC=mpc[mt.locus, mt.alleles].mpc)
+# mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
+# mt = mt.annotate_rows(MPC=mpc[mt.locus, mt.alleles].mpc)
 
 ## pAB annotations
 
