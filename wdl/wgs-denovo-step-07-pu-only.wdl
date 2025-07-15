@@ -5,7 +5,7 @@ import  "flagRepetitiveRegions.wdl" as flagRepetitiveRegions
 import "wgs-denovo-bagging-pu-rf-len.wdl" as BaggingPU_RF
 import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
 import "filterUltraRareParentsVariantsHail.wdl" as filterUltraRareParentsVariantsHail 
-import "wes-denovo-helpers.wdl" as helpers
+import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/eren_dev/wdl/helpers.wdl" as helpers
 
 struct RuntimeAttr {
     Float? mem_gb
