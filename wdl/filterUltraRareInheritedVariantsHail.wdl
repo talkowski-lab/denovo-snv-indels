@@ -1,8 +1,8 @@
 version 1.0
 
 import "mergeSplitVCF.wdl" as mergeSplitVCF
-import "mergeVCFs.wdl" as mergeVCFs
-import "wes-denovo-helpers.wdl" as helpers
+import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/eren_dev/wdl/mergeVCFs.wdl" as mergeVCFs
+import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/eren_dev/wdl/helpers.wdl" as helpers
 import "downsampleVariantsfromTSV.wdl" as downsampleVariantsfromTSV
 import "prioritizeCSQ.wdl" as prioritizeCSQ
 
