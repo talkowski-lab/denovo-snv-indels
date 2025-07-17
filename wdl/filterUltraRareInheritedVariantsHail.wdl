@@ -54,6 +54,7 @@ workflow filterUltraRareInheritedVariantsHail {
         String sample_column='SAMPLE'
 
         #for downsampling
+        Boolean downsample=false  # optional, downsampling requires WGS de novo output-specific fields
         Int chunk_size=100000
         Float snv_scale=1
         Float indel_scale=1
@@ -127,28 +128,30 @@ workflow filterUltraRareInheritedVariantsHail {
         runtime_attr_override=runtime_attr_prioritize
     }
 
-    call downsampleVariantsfromTSV.downsampleVariantsfromTSV as downsampleVariantsfromTSV {
-        input:
-        reference_tsv=vcf_metrics_tsv_final,
-        full_input_tsv=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
-        remove_regions_bed=remove_regions_bed,
-        hg38_reference=hg38_reference,
-        hg38_reference_dict=hg38_reference_dict,
-        hg38_reference_fai=hg38_reference_fai,
-        jvarkit_docker=jvarkit_docker,
-        hail_docker=hail_docker,
-        chunk_size=chunk_size,
-        snv_scale=snv_scale,
-        indel_scale=indel_scale,
-        prioritize_gnomad=prioritize_gnomad,
-        prioritize_coding=prioritize_coding,
-        runtime_attr_downsample=runtime_attr_downsample
+    if (downsample) {
+        call downsampleVariantsfromTSV.downsampleVariantsfromTSV as downsampleVariantsfromTSV {
+            input:
+            reference_tsv=vcf_metrics_tsv_final,
+            full_input_tsv=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
+            remove_regions_bed=remove_regions_bed,
+            hg38_reference=hg38_reference,
+            hg38_reference_dict=hg38_reference_dict,
+            hg38_reference_fai=hg38_reference_fai,
+            jvarkit_docker=jvarkit_docker,
+            hail_docker=hail_docker,
+            chunk_size=chunk_size,
+            snv_scale=snv_scale,
+            indel_scale=indel_scale,
+            prioritize_gnomad=prioritize_gnomad,
+            prioritize_coding=prioritize_coding,
+            runtime_attr_downsample=runtime_attr_downsample
+        }
     }
 
     output {
         File ultra_rare_inherited_tsv = prioritizeCSQ.vcf_metrics_tsv_prior_csq
-        File downsampled_ultra_rare_inherited_SNV = downsampleVariantsfromTSV.downsampled_tsv_SNV
-        File downsampled_ultra_rare_inherited_Indel = downsampleVariantsfromTSV.downsampled_tsv_Indel
+        File downsampled_ultra_rare_inherited_SNV = select_first([downsampleVariantsfromTSV.downsampled_tsv_SNV, prioritizeCSQ.vcf_metrics_tsv_prior_csq])
+        File downsampled_ultra_rare_inherited_Indel = select_first([downsampleVariantsfromTSV.downsampled_tsv_Indel, prioritizeCSQ.vcf_metrics_tsv_prior_csq])
     }
 }
 
