@@ -20,14 +20,14 @@ workflow filterUltraRareInheritedVariantsHail {
         Array[File] annot_vcf_files
         File lcr_uri
         File ped_sex_qc
-        File meta_uri
-        File trio_uri
+        File? meta_uri
+        File? trio_uri
         File vcf_metrics_tsv_final
         File remove_regions_bed
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        # String python_trio_sample_script
+        String python_trio_sample_script
         String filter_rare_inherited_python_script
         String jvarkit_docker
         String hail_docker
@@ -66,17 +66,17 @@ workflow filterUltraRareInheritedVariantsHail {
         RuntimeAttr? runtime_attr_downsample
     }  
 
-    # if (!defined(meta_uri)) {
-    #     call makeTrioSampleFiles {
-    #         input:
-    #             python_trio_sample_script=python_trio_sample_script,
-    #             ped_sex_qc=ped_sex_qc,
-    #             cohort_prefix=cohort_prefix,
-    #             hail_docker=hail_docker
-    #     }        
-    # }
-    # File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
-    # File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
+    if (!defined(meta_uri)) {
+        call makeTrioSampleFiles {
+            input:
+                python_trio_sample_script=python_trio_sample_script,
+                ped_sex_qc=ped_sex_qc,
+                cohort_prefix=cohort_prefix,
+                hail_docker=hail_docker
+        }        
+    }
+    File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
+    File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
     
     scatter (vcf_file in annot_vcf_files) {
         String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
@@ -85,8 +85,8 @@ workflow filterUltraRareInheritedVariantsHail {
                 vcf_file=vcf_file,
                 lcr_uri=lcr_uri,
                 ped_sex_qc=ped_sex_qc,
-                meta_uri=meta_uri,
-                trio_uri=trio_uri,
+                meta_uri=meta_uri_,
+                trio_uri=trio_uri_,
                 filter_rare_inherited_python_script=filter_rare_inherited_python_script,
                 hail_docker=hail_docker,
                 cohort_prefix=basename(vcf_file, file_ext),
@@ -233,11 +233,29 @@ task filterUltraRareInheritedVariants {
     command <<<
         set -eou pipefail
         curl ~{filter_rare_inherited_python_script} > filter_rare_variants.py
-        python3 filter_rare_variants.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
-        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
-        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
-        ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
-        ~{mq_threshold} ~{genome_build} > stdout
+        python3 filter_rare_variants.py \
+        --lcr-uri ~{lcr_uri} \
+        --ped-uri ~{ped_sex_qc} \
+        --meta-uri ~{meta_uri} \
+        --trio-uri ~{trio_uri} \
+        --vcf-file ~{vcf_file} \
+        --cohort-prefix ~{cohort_prefix} \
+        --cores ~{cpu_cores} \
+        --mem ~{memory} \
+        --ac-threshold ~{AC_threshold} \
+        --af-threshold ~{AF_threshold} \
+        --csq-af-threshold ~{csq_af_threshold} \
+        --gq-het-threshold ~{gq_het_threshold} \
+        --gq-hom-ref-threshold ~{gq_hom_ref_threshold} \
+        --qual-threshold ~{qual_threshold} \
+        --sor-threshold-indel ~{sor_threshold_indel} \
+        --sor-threshold-snv ~{sor_threshold_snv} \
+        --readposranksum-threshold-indel ~{readposranksum_threshold_indel} \
+        --readposranksum-threshold-snv ~{readposranksum_threshold_snv} \
+        --qd-threshold-indel ~{qd_threshold_indel} \
+        --qd-threshold-snv ~{qd_threshold_snv} \
+        --mq-threshold ~{mq_threshold} \
+        --build ~{genome_build} > stdout
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>
