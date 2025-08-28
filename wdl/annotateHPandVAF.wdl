@@ -52,7 +52,7 @@ task annotateVCF {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(trio_vcf, "GB")
+    Float input_size = size([trio_vcf, vep_vcf_file, hg38_reference], "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
     Float input_mem_scale = 3.0
@@ -84,6 +84,7 @@ task annotateVCF {
     String out_vcf = basename(trio_vcf, '.vcf')+'_HP_VAF.vcf'
 
     command <<<
+        set -eou pipefail
         bcftools head ~{vep_vcf_file} > og_header.txt
         grep "FILTER=" og_header.txt > new_header.txt
         bcftools annotate -h new_header.txt -o ~{clean_vcf} ~{trio_vcf}
