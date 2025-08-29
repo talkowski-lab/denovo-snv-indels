@@ -15,7 +15,7 @@ workflow downsampleVariantsfromTSV {
     input {
         File reference_tsv
         File full_input_tsv
-        File remove_regions_bed
+        File? remove_regions_bed
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
@@ -42,20 +42,22 @@ workflow downsampleVariantsfromTSV {
             var_type=var_type
         }
 
-        call removeRegions.removeRegionsVariants as removeRegionsVariants {
-            input:
-            remove_regions_bed=remove_regions_bed,
-            full_input_tsv=full_input_tsv,
-            hail_docker=hail_docker,
-            var_type=var_type,
-            genome_build=genome_build,
-            runtime_attr_override=runtime_attr_downsample,
-            prioritize_coding=prioritize_coding
+        if (defined(remove_regions_bed)) {
+            call removeRegions.removeRegionsVariants as removeRegionsVariants {
+                input:
+                remove_regions_bed=select_first([remove_regions_bed]),
+                full_input_tsv=full_input_tsv,
+                hail_docker=hail_docker,
+                var_type=var_type,
+                genome_build=genome_build,
+                runtime_attr_override=runtime_attr_downsample,
+                prioritize_coding=prioritize_coding
+            }
         }
-        
+
         call downsampleVariantsPython {
             input:
-            full_input_tsv=removeRegionsVariants.filtered_tsv,
+            full_input_tsv=select_first([removeRegionsVariants.filtered_tsv, full_input_tsv]),
             hail_docker=hail_docker,
             var_type=var_type,
             chunk_size=chunk_size,
