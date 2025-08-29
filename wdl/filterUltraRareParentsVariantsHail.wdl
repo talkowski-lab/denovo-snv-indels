@@ -28,7 +28,7 @@ workflow filterUltraRareParentsVariantsHail {
         File hg38_reference_dict
         File hg38_reference_fai
         # String python_trio_sample_script
-        String filter_rare_parents_python_script
+        String filter_rare_parents_python_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wgs_ultra_rare_parents_variants_hail.py"
         String jvarkit_docker
         String hail_docker
         String sv_base_mini_docker
