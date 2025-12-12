@@ -41,7 +41,7 @@ def parse_args():
     add("--gnomad-af-threshold", type=float, default=0.001)
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
-    add("--mem", type=int, default=50)
+    add("--mem", type=float)
 
     return p.parse_args()
 
