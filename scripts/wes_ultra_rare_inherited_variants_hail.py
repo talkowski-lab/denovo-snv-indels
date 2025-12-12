@@ -183,10 +183,13 @@ inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_ent
 inh_td_mt_uri = f"{td_mt_uri.split('.mt')[0]}.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_mt_uri, overwrite=True)
 
-inh_df = inh_td.entries().flatten().to_pandas()
-
-inh_df[['REF','ALT']] = inh_df['alleles'].apply(pd.Series)
-inh_df['ID'] = inh_df[['locus','REF','ALT']].astype(str).apply(':'.join, axis=1)
-
 inh_output_uri = f"{td_mt_uri.split('.mt')[0]}.inherited.tsv.gz"
-inh_df.to_csv(inh_output_uri, sep='\t', index=False)
+inh_td.entries().flatten().export(inh_output_uri)
+
+# inh_df = inh_td.entries().flatten().to_pandas()
+
+# inh_df[['REF','ALT']] = inh_df['alleles'].apply(pd.Series)
+# inh_df['ID'] = inh_df[['locus','REF','ALT']].astype(str).apply(':'.join, axis=1)
+
+# inh_output_uri = f"{td_mt_uri.split('.mt')[0]}.inherited.tsv.gz"
+# inh_df.to_csv(inh_output_uri, sep='\t', index=False)
