@@ -47,7 +47,6 @@ def parse_args():
 
 args = parse_args()
 
-vep_vcf_uri = args.vep_vcf_uri
 filt_mt_uri = args.filt_mt_uri
 ped_uri = args.ped_uri
 gnomad_af_threshold = args.gnomad_af_threshold
