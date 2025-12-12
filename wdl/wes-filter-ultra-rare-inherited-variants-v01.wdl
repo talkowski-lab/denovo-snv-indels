@@ -11,7 +11,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow step3 {
+workflow filterUltraRareInheritedVariants {
     input {
         Array[String] filtered_mt
         File ped_sex_qc
