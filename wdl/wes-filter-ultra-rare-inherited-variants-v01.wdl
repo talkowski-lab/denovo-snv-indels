@@ -13,7 +13,6 @@ struct RuntimeAttr {
 
 workflow filterUltraRareInheritedVariants {
     input {
-        Array[File] vep_vcf_files
         Array[String] filtered_mt
         File ped_sex_qc
         String cohort_prefix
@@ -35,7 +34,6 @@ workflow filterUltraRareInheritedVariants {
         call hailUltraRareInheritedFilteringRemote {
             input:
                 filtered_mt=mt_uri,
-                vep_vcf_uri=vep_vcf_files[0],
                 input_size=getHailMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 cohort_prefix=cohort_prefix,
@@ -57,7 +55,6 @@ workflow filterUltraRareInheritedVariants {
 task hailUltraRareInheritedFilteringRemote {
     input {
         File ped_sex_qc
-        File vep_vcf_uri
         Float input_size
         String filtered_mt
         String cohort_prefix
@@ -99,7 +96,6 @@ task hailUltraRareInheritedFilteringRemote {
         curl ~{hail_ultra_rare_inherited_filtering_script} > hail_ultra_rare_inherited_filtering_script.py
         python3 hail_ultra_rare_inherited_filtering_script.py \
             --ped-uri ~{ped_sex_qc} \
-            --vep-vcf-uri ~{vep_vcf_uri} \
             --filt-mt-uri ~{filtered_mt} \
             --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
