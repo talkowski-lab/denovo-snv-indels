@@ -16,7 +16,7 @@ workflow step3 {
         Array[String] filtered_mt
         File ped_sex_qc
         String cohort_prefix
-        String hail_ultra_rare_inherited_filtering_script
+        String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_ultra_rare_inherited_variants_hail.py"
         String hail_docker
 
         Float gnomad_af_threshold=0.001
