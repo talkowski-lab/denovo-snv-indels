@@ -54,6 +54,8 @@ cohort_ac_threshold = args.cohort_ac_threshold
 cohort_af_threshold = args.cohort_af_threshold
 mem = args.mem
 
+prefix = os.path.basename(filt_mt_uri).split('.mt')[0]
+
 hl.init(min_block_size=128, 
         local=f"local[*]", 
         spark_conf={
@@ -167,7 +169,7 @@ tdt_table_filtered = hl.transmission_disequilibrium_test(filt_mt, pedigree)
 
 td = td.annotate_rows(tdt=tdt_table_filtered[td.row_key])
 
-td_mt_uri = f"{filt_mt_uri.split('.mt')[0]}.tdt.mt"
+td_mt_uri = f"{prefix}.tdt.mt"
 td = td.checkpoint(td_mt_uri, overwrite=True)
 
 td = hl.read_matrix_table(td_mt_uri)
@@ -180,10 +182,10 @@ inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_ent
                   (hl.is_defined(inh_td.mother_entry.GT)) |
                   (hl.is_defined(inh_td.father_entry.GT)))>0)
 
-inh_td_mt_uri = f"{td_mt_uri.split('.mt')[0]}.inherited.mt"
+inh_td_mt_uri = f"{prefix}.tdt.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_mt_uri, overwrite=True)
 
-inh_output_uri = f"{td_mt_uri.split('.mt')[0]}.inherited.tsv.gz"
+inh_output_uri = f"{prefix}.tdt.inherited.tsv.gz"
 inh_td.entries().flatten().export(inh_output_uri)
 
 # inh_df = inh_td.entries().flatten().to_pandas()
