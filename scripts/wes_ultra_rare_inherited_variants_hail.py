@@ -359,7 +359,7 @@ inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_ent
                   (hl.is_defined(inh_td.mother_entry.GT)) |
                   (hl.is_defined(inh_td.father_entry.GT)))>0)
 
-inh_td_mt_uri = f"{prefix}.inherited.mt"
+inh_td_mt_uri = f"{prefix}.tdt.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_mt_uri, overwrite=True)
 
 inh_df = inh_td.entries().flatten().to_pandas()
@@ -372,5 +372,5 @@ inh_df = inh_df[inh_df['isCoding']]
 inh_df[['REF','ALT']] = inh_df['alleles'].apply(pd.Series)
 inh_df['ID'] = inh_df[['locus','REF','ALT']].astype(str).apply(':'.join, axis=1)
 
-inh_output_uri = f"{prefix}.inherited.tsv.gz"
+inh_output_uri = f"{prefix}.tdt.inherited.tsv.gz"
 inh_df.to_csv(inh_output_uri, sep='\t', index=False)
