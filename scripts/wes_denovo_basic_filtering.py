@@ -198,7 +198,7 @@ def sex_aware_variant_annotations_with_pHWE(mt):
 mt = sex_aware_variant_annotations_with_pHWE(mt)
 
 # Filter non-variant sites (ought to be redundant with the way I structured things above)
-mt = mt.filter_rows(mt.AC > 0, keep = True)
+# mt = mt.filter_rows(mt.AC > 0, keep = True)
 
 # Let's impose a modest variant call rate and pHWE filter
 mt = mt.filter_rows((mt.call_rate < call_rate_threshold) | (mt.pHWE < 0.000000000001), keep = False)
