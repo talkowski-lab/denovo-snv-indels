@@ -369,8 +369,9 @@ inh_df['isCoding'] = inh_df['vep.worst_csq.most_severe_consequence'].isin(coding
 # Output coding only
 inh_df = inh_df[inh_df['isCoding']]
 
-inh_df[['REF','ALT']] = inh_df['alleles'].apply(pd.Series)
-inh_df['ID'] = inh_df[['locus','REF','ALT']].astype(str).apply(':'.join, axis=1)
+if len(inh_df)>0:
+    inh_df[['REF','ALT']] = inh_df['alleles'].apply(pd.Series)
+    inh_df['ID'] = inh_df[['locus','REF','ALT']].astype(str).apply(':'.join, axis=1)
 
 inh_output_uri = f"{prefix}.tdt.inherited.tsv.gz"
 inh_df.to_csv(inh_output_uri, sep='\t', index=False)
