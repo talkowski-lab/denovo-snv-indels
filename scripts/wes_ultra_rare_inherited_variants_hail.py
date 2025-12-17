@@ -373,6 +373,8 @@ ped_ht = hl.import_table(cropped_ped_uri, types={'phenotype': hl.tfloat, 'sex': 
 # Cases not in trio
 non_trio_cases = ped_ht.filter((ped_ht.phenotype==2) &
              (~hl.array(complete_trio_samples).contains(ped_ht.sample_id))).sample_id.collect()
+if len(non_trio_cases)==0:
+    non_trio_cases = ['']
 non_trio_cases_mt = filt_mt.filter_cols(hl.array(non_trio_cases).contains(filt_mt.s))
 non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
 # Output coding only
