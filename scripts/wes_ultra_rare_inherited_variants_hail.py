@@ -373,17 +373,15 @@ ped_ht = hl.import_table(cropped_ped_uri, types={'phenotype': hl.tfloat, 'sex': 
 # Cases not in trio
 non_trio_cases = ped_ht.filter((ped_ht.phenotype==2) &
              (~hl.array(complete_trio_samples).contains(ped_ht.sample_id))).sample_id.collect()
-if len(non_trio_cases)==0:
-    non_trio_cases = ['']
-non_trio_cases_tm = tm.filter_cols(hl.array(non_trio_cases).contains(tm.id))
-non_trio_cases_tm = non_trio_cases_tm.filter_entries(non_trio_cases_tm.proband_entry.GT.is_non_ref())
+non_trio_cases_mt = filt_mt.filter_cols(hl.array(non_trio_cases).contains(filt_mt.s))
+non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
 # Output coding only
-non_trio_cases_tm = non_trio_cases_tm.filter_rows(hl.array(coding_variants).contains(
-    non_trio_cases_tm.worst_csq.most_severe_consequence))
-non_trio_cases_tm_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
-non_trio_cases_tm = non_trio_cases_tm.checkpoint(non_trio_cases_tm_uri, overwrite=True)
+non_trio_cases_mt = non_trio_cases_mt.filter_rows(hl.array(coding_variants).contains(
+    non_trio_cases_mt.worst_csq.most_severe_consequence))
+non_trio_cases_mt_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
+non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrite=True)
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
-non_trio_cases_tm.entries().flatten().export(non_trio_cases_output_uri)
+non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 
 # Control samples that aren't unaffected parents
 parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
