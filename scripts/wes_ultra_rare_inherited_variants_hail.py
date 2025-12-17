@@ -373,6 +373,8 @@ ped_ht = hl.import_table(cropped_ped_uri, types={'phenotype': hl.tfloat, 'sex': 
 # Cases not in trio
 non_trio_cases = ped_ht.filter((ped_ht.phenotype==2) &
              (~hl.array(complete_trio_samples).contains(ped_ht.sample_id))).sample_id.collect()
+if len(non_trio_cases)==0:
+    non_trio_cases = ['']
 non_trio_cases_tm = tm.filter_cols(hl.array(non_trio_cases).contains(tm.id))
 non_trio_cases_tm = non_trio_cases_tm.filter_entries(non_trio_cases_tm.proband_entry.GT.is_non_ref())
 # Output coding only
@@ -387,6 +389,8 @@ non_trio_cases_tm.entries().flatten().export(non_trio_cases_output_uri)
 parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
     [trio.mat_id for trio in pedigree.trios] if s not in ['paternal_id','maternal_id',None]]
 control_samples = ped_ht.filter((ped_ht.phenotype==1)).sample_id.collect()
+if len(control_samples)==0:
+    control_samples = ['']
 control_tm = tm.filter_cols((hl.array(control_samples).contains(tm.id)) &
                            (~hl.array(parent_samples).contains(tm.id)))
 control_tm = control_tm.filter_entries(control_tm.proband_entry.GT.is_non_ref())
