@@ -307,11 +307,13 @@ filt_mt = filter_vep_to_canonical_transcripts(filt_mt)
 filt_mt = process_consequences(filt_mt)
 filt_mt = filt_mt.annotate_rows(worst_csq=filt_mt.vep.worst_csq)
 
+ultra_rare_filt_mt_uri = f"{prefix}.ultra.rare.mt"
+filt_mt = filt_mt.checkpoint(ultra_rare_filt_mt_uri, overwrite=True)
+
 ped_df = pd.read_csv(ped_uri, sep='\t')
 
 cropped_ped_uri = f"{ped_uri.split('.ped')[0]}_cropped.ped"
 ped_df.iloc[:,:6].to_csv(cropped_ped_uri, index=False, sep='\t')
-cropped_ped_uri
 
 pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter='\t')
 
@@ -319,9 +321,9 @@ complete_trio_samples = [trio.s for trio in pedigree.complete_trios()] + \
     [trio.pat_id for trio in pedigree.complete_trios()] + \
     [trio.mat_id for trio in pedigree.complete_trios()]
 
-pedigree = pedigree.filter_to(complete_trio_samples)
+trio_pedigree = pedigree.filter_to(complete_trio_samples)
 
-td = hl.trio_matrix(filt_mt, pedigree, complete_trios=True)
+td = hl.trio_matrix(filt_mt, trio_pedigree, complete_trios=True)
 
 td = parent_aware_t_u_annotations_v4(td)
 
@@ -329,7 +331,7 @@ td = td.annotate_entries(total_t_from_parents = td.t_from_dad + td.t_from_mom,
                         total_u_from_parents = td.u_from_dad + td.u_from_mom)
 
 # Original function for site-level
-tdt_table_filtered = hl.transmission_disequilibrium_test(filt_mt, pedigree)
+tdt_table_filtered = hl.transmission_disequilibrium_test(filt_mt, trio_pedigree)
 
 td = td.annotate_rows(tdt=tdt_table_filtered[td.row_key])
 
