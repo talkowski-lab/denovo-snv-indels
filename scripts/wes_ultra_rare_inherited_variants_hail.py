@@ -351,27 +351,45 @@ syn_td = syn_td.annotate_rows(
 )
 
 
-# Ultra-rare inherited
-
-# Ultra-rare inherited
+## Ultra-rare inherited ##
 inh_td = td.filter_entries((td.total_t_from_parents==1) & (td.total_u_from_parents==0))
 inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_entry.GT)) |
                   (hl.is_defined(inh_td.mother_entry.GT)) |
                   (hl.is_defined(inh_td.father_entry.GT)))>0)
-
-inh_td_mt_uri = f"{prefix}.tdt.inherited.mt"
-inh_td = inh_td.checkpoint(inh_td_mt_uri, overwrite=True)
-
-inh_df = inh_td.entries().flatten().to_pandas()
-
-inh_df['isCoding'] = inh_df['vep.worst_csq.most_severe_consequence'].isin(coding_variants)
-
 # Output coding only
-inh_df = inh_df[inh_df['isCoding']]
+inh_td = inh_td.filter_rows(hl.array(coding_variants).contains(
+    inh_td.worst_csq.most_severe_consequence))
+inh_td_uri = f"{prefix}.ultra.rare.inherited.mt"
+inh_td = inh_td.checkpoint(inh_td_uri, overwrite=True)
+inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
+inh_td.entries().flatten().export(inh_output_uri)
 
-if len(inh_df)>0:
-    inh_df[['REF','ALT']] = inh_df['alleles'].apply(pd.Series)
-    inh_df['ID'] = inh_df[['locus','REF','ALT']].astype(str).apply(':'.join, axis=1)
+## Ultra-rare in cases/controls ##
+tm = hl.trio_matrix(filt_mt, pedigree)
+ped_ht = hl.import_table(cropped_ped_uri, types={'phenotype': hl.tfloat, 'sex': hl.tfloat})
 
-inh_output_uri = f"{prefix}.tdt.inherited.tsv.gz"
-inh_df.to_csv(inh_output_uri, sep='\t', index=False)
+# Cases not in trio
+non_trio_cases = ped_ht.filter((ped_ht.phenotype==1) &
+             (~hl.array(complete_trio_samples).contains(ped_ht.sample_id))).sample_id.collect()
+non_trio_cases_tm = tm.filter_cols(hl.array(non_trio_cases).contains(tm.id))
+# Output coding only
+non_trio_cases_tm = non_trio_cases_tm.filter_rows(hl.array(coding_variants).contains(
+    non_trio_cases_tm.worst_csq.most_severe_consequence))
+non_trio_cases_tm_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
+non_trio_cases_tm = non_trio_cases_tm.checkpoint(non_trio_cases_tm_uri, overwrite=True)
+non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
+non_trio_cases_tm.entries().flatten().export(non_trio_cases_output_uri)
+
+# Control samples that aren't unaffected parents
+parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
+    [trio.mat_id for trio in pedigree.trios] if s not in ['paternal_id','maternal_id',None]]
+control_samples = ped_ht.filter((ped_ht.phenotype==2)).sample_id.collect()
+control_tm = tm.filter_cols((hl.array(control_samples).contains(tm.id)) &
+                           (~hl.array(parent_samples).contains(tm.id)))
+# Output coding only
+control_tm = control_tm.filter_rows(hl.array(coding_variants).contains(
+    control_tm.worst_csq.most_severe_consequence))
+control_tm_uri = f"{prefix}.ultra.rare.controls.mt"
+control_tm = control_tm.checkpoint(control_tm_uri, overwrite=True)
+control_output_uri = f"{prefix}.ultra.rare.controls.tsv.gz"
+control_tm.entries().flatten().export(control_output_uri)

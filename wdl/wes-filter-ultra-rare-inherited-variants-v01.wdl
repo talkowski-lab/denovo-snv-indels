@@ -91,9 +91,35 @@ workflow filterUltraRareInheritedVariants {
                 cohort_ac_threshold=cohort_ac_threshold
         }
     }
+    
+    call helpers.mergeResultsPython as mergeUltraRareInherited {
+        input:
+            tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_inherited_tsv,
+            hail_docker=hail_docker,
+            input_size=size(hailUltraRareInheritedFilteringRemote.ultra_rare_inherited_tsv, 'GB'),
+            merged_filename=cohort_prefix+'.ultra.rare.inherited.tsv.gz'
+    }
+
+    call helpers.mergeResultsPython as mergeUltraRareNonTrioCases {
+        input:
+            tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_non_trio_cases_tsv,
+            hail_docker=hail_docker,
+            input_size=size(hailUltraRareInheritedFilteringRemote.ultra_rare_non_trio_cases_tsv, 'GB'),
+            merged_filename=cohort_prefix+'.ultra.rare.non.trio.cases.tsv.gz'
+    }
+
+    call helpers.mergeResultsPython as mergeUltraRareControls {
+        input:
+            tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_controls_tsv,
+            hail_docker=hail_docker,
+            input_size=size(hailUltraRareInheritedFilteringRemote.ultra_rare_controls_tsv, 'GB'),
+            merged_filename=cohort_prefix+'.ultra.rare.controls.tsv.gz'
+    }
 
     output {
-        Array[File] ultra_rare_inherited_wes_tsvs = hailUltraRareInheritedFilteringRemote.output_tsv
+        File ultra_rare_inherited_wes_tsv = mergeUltraRareInherited.merged_tsv
+        File ultra_rare_non_trio_cases_wes_tsv = mergeUltraRareNonTrioCases.merged_tsv
+        File ultra_rare_controls_wes_tsv = mergeUltraRareControls.merged_tsv
     }
 }
 
@@ -153,6 +179,8 @@ task hailUltraRareInheritedFilteringRemote {
 
     String prefix = basename(filtered_mt, ".mt")
     output {
-        File output_tsv = "~{prefix}.tdt.inherited.tsv.gz"
+        File ultra_rare_inherited_tsv = "~{prefix}.ultra.rare.inherited.tsv.gz"
+        File ultra_rare_non_trio_cases_tsv = "~{prefix}.ultra.rare.non.trio.cases.tsv.gz"
+        File ultra_rare_controls_tsv = "~{prefix}.ultra.rare.controls.tsv.gz"
     }
 }
