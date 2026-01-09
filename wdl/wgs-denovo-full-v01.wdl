@@ -6,7 +6,8 @@ import "wgs-denovo-step-03-v01.wdl" as step3
 import "wgs-denovo-step-04-v01.wdl" as step4
 import "wgs-denovo-step-05-v01.wdl" as step5
 import "wgs-denovo-step-06-v01.wdl" as step6
-import "wgs-denovo-step-07-v01.wdl" as step7
+# import "wgs-denovo-step-07-v01.wdl" as step7
+import "wgs-denovo-step-07-pu-only.wdl" as step7
 import "annotateHPandVAF.wdl" as annotateHPandVAF
 import "annotateMPCandLOEUF.wdl" as annotateMPCandLOEUF
 import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
@@ -76,69 +77,69 @@ workflow wgs_denovo_full {
         Float csq_af_threshold=0.01
     }
 
-    # call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
-    #     input:
-    #         annot_vcf_files=annot_vcf_files,
-    #         lcr_uri=lcr_uri,
-    #         ped_sex_qc=ped_sex_qc,
-    #         meta_uri=meta_uri,
-    #         trio_uri=trio_uri,
-    #         vcf_metrics_tsv_final=vcf_metrics_tsv_final,
-    #         hg38_reference=hg38_reference,
-    #         hg38_reference_dict=hg38_reference_dict,
-    #         hg38_reference_fai=hg38_reference_fai,
-    #         # filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-    #         jvarkit_docker=jvarkit_docker,
-    #         hail_docker=hail_docker,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         cohort_prefix=cohort_prefix,
-    #         AF_threshold=AF_threshold,
-    #         AC_threshold=AC_threshold,
-    #         csq_af_threshold=csq_af_threshold,
-    #         # gq_het_threshold=gq_het_threshold,
-    #         # gq_hom_ref_threshold=gq_hom_ref_threshold,
-    #         qual_threshold=qual_threshold,
-    #         shards_per_chunk=shards_per_chunk,
-    #         # chunk_size=chunk_size,
-    #         # snv_scale=snv_scale,
-    #         # indel_scale=indel_scale,
-    #         prioritize_gnomad=false,
-    #         # runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-    #         # runtime_attr_merge_results=runtime_attr_merge_results,
-    #         # runtime_attr_downsample=runtime_attr_downsample
-    # }
+    call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
+        input:
+            annot_vcf_files=annot_vcf_files,
+            lcr_uri=lcr_uri,
+            ped_sex_qc=ped_sex_qc,
+            meta_uri=meta_uri,
+            trio_uri=trio_uri,
+            vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+            hg38_reference=hg38_reference,
+            hg38_reference_dict=hg38_reference_dict,
+            hg38_reference_fai=hg38_reference_fai,
+            # filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+            jvarkit_docker=jvarkit_docker,
+            hail_docker=hail_docker,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            AF_threshold=AF_threshold,
+            AC_threshold=AC_threshold,
+            csq_af_threshold=csq_af_threshold,
+            # gq_het_threshold=gq_het_threshold,
+            # gq_hom_ref_threshold=gq_hom_ref_threshold,
+            qual_threshold=qual_threshold,
+            shards_per_chunk=shards_per_chunk,
+            # chunk_size=chunk_size,
+            # snv_scale=snv_scale,
+            # indel_scale=indel_scale,
+            prioritize_gnomad=false,
+            # runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+            # runtime_attr_merge_results=runtime_attr_merge_results,
+            # runtime_attr_downsample=runtime_attr_downsample
+    }
 
-    # call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
-    #     input:
-    #         annot_vcf_files=annot_vcf_files,
-    #         lcr_uri=lcr_uri,
-    #         ped_sex_qc=ped_sex_qc,
-    #         meta_uri=meta_uri,
-    #         trio_uri=trio_uri,
-    #         vcf_metrics_tsv_final=vcf_metrics_tsv_final,
-    #         hg38_reference=hg38_reference,
-    #         hg38_reference_dict=hg38_reference_dict,
-    #         hg38_reference_fai=hg38_reference_fai,
-    #         # filter_rare_parents_python_script=filter_rare_parents_python_script,
-    #         jvarkit_docker=jvarkit_docker,
-    #         hail_docker=hail_docker,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         cohort_prefix=cohort_prefix,
-    #         AF_threshold=AF_threshold,
-    #         AC_threshold=AC_threshold,
-    #         csq_af_threshold=csq_af_threshold,
-    #         # gq_het_threshold=gq_het_threshold,
-    #         # gq_hom_ref_threshold=gq_hom_ref_threshold,
-    #         qual_threshold=qual_threshold,
-    #         shards_per_chunk=shards_per_chunk,
-    #         # chunk_size=chunk_size,
-    #         # snv_scale=snv_scale,
-    #         # indel_scale=indel_scale,
-    #         prioritize_gnomad=true,
-    #         # runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-    #         # runtime_attr_merge_results=runtime_attr_merge_results,
-    #         # runtime_attr_downsample=runtime_attr_downsample
-    # }
+    call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
+        input:
+            annot_vcf_files=annot_vcf_files,
+            lcr_uri=lcr_uri,
+            ped_sex_qc=ped_sex_qc,
+            meta_uri=meta_uri,
+            trio_uri=trio_uri,
+            vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+            hg38_reference=hg38_reference,
+            hg38_reference_dict=hg38_reference_dict,
+            hg38_reference_fai=hg38_reference_fai,
+            # filter_rare_parents_python_script=filter_rare_parents_python_script,
+            jvarkit_docker=jvarkit_docker,
+            hail_docker=hail_docker,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            AF_threshold=AF_threshold,
+            AC_threshold=AC_threshold,
+            csq_af_threshold=csq_af_threshold,
+            # gq_het_threshold=gq_het_threshold,
+            # gq_hom_ref_threshold=gq_hom_ref_threshold,
+            qual_threshold=qual_threshold,
+            shards_per_chunk=shards_per_chunk,
+            # chunk_size=chunk_size,
+            # snv_scale=snv_scale,
+            # indel_scale=indel_scale,
+            prioritize_gnomad=true,
+            # runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+            # runtime_attr_merge_results=runtime_attr_merge_results,
+            # runtime_attr_downsample=runtime_attr_downsample
+    }
 
     call step1.step1 as step1 {
         input:
@@ -233,7 +234,6 @@ workflow wgs_denovo_full {
 
     call step7.step7 as step7 {
         input:
-        annot_vcf_files=annot_vcf_files,
         lcr_uri=lcr_uri,
         ped_sex_qc=ped_sex_qc,
         meta_uri=meta_uri,
@@ -242,30 +242,52 @@ workflow wgs_denovo_full {
         hg38_reference=hg38_reference,
         hg38_reference_dict=hg38_reference_dict,
         hg38_reference_fai=hg38_reference_fai,
-        # filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-        # filter_rare_parents_python_script=filter_rare_parents_python_script,
         jvarkit_docker=jvarkit_docker,
         hail_docker=hail_docker,
         sv_base_mini_docker=sv_base_mini_docker,
         cohort_prefix=cohort_prefix,
-        AF_threshold=AF_threshold,
-        AC_threshold=AC_threshold,
-        csq_af_threshold=csq_af_threshold,
-        qual_threshold=qual_threshold,
-        sor_threshold_indel=sor_threshold_indel,
-        sor_threshold_snv=sor_threshold_snv,
-        readposranksum_threshold_indel=readposranksum_threshold_indel,
-        readposranksum_threshold_snv=readposranksum_threshold_snv,
-        qd_threshold_indel=qd_threshold_indel,
-        qd_threshold_snv=qd_threshold_snv,
-        mq_threshold=mq_threshold,        
-        shards_per_chunk=shards_per_chunk,
         repetitive_regions_bed=repetitive_regions_bed,
         # bagging_pu_source_script=bagging_pu_source_script,
         # bagging_pu_rf_len_script=bagging_pu_rf_len_script,
         # tsv_to_bed_script=tsv_to_bed_script,
         cohort_prefix=cohort_prefix
     }
+
+    # call step7.step7 as step7 {
+    #     input:
+    #     annot_vcf_files=annot_vcf_files,
+    #     lcr_uri=lcr_uri,
+    #     ped_sex_qc=ped_sex_qc,
+    #     meta_uri=meta_uri,
+    #     trio_uri=trio_uri,
+    #     vcf_metrics_tsv_final=step6.vcf_metrics_tsv_final,
+    #     hg38_reference=hg38_reference,
+    #     hg38_reference_dict=hg38_reference_dict,
+    #     hg38_reference_fai=hg38_reference_fai,
+    #     # filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+    #     # filter_rare_parents_python_script=filter_rare_parents_python_script,
+    #     jvarkit_docker=jvarkit_docker,
+    #     hail_docker=hail_docker,
+    #     sv_base_mini_docker=sv_base_mini_docker,
+    #     cohort_prefix=cohort_prefix,
+    #     AF_threshold=AF_threshold,
+    #     AC_threshold=AC_threshold,
+    #     csq_af_threshold=csq_af_threshold,
+    #     qual_threshold=qual_threshold,
+    #     sor_threshold_indel=sor_threshold_indel,
+    #     sor_threshold_snv=sor_threshold_snv,
+    #     readposranksum_threshold_indel=readposranksum_threshold_indel,
+    #     readposranksum_threshold_snv=readposranksum_threshold_snv,
+    #     qd_threshold_indel=qd_threshold_indel,
+    #     qd_threshold_snv=qd_threshold_snv,
+    #     mq_threshold=mq_threshold,        
+    #     shards_per_chunk=shards_per_chunk,
+    #     repetitive_regions_bed=repetitive_regions_bed,
+    #     # bagging_pu_source_script=bagging_pu_source_script,
+    #     # bagging_pu_rf_len_script=bagging_pu_rf_len_script,
+    #     # tsv_to_bed_script=tsv_to_bed_script,
+    #     cohort_prefix=cohort_prefix
+    # }
 
     output {
         File meta_uri = step1.meta_uri
@@ -283,12 +305,12 @@ workflow wgs_denovo_full {
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
         File vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
         
-        File ultra_rare_inherited_tsv = step7.ultra_rare_inherited_tsv
-        File downsampled_ultra_rare_inherited_SNV = step7.downsampled_ultra_rare_inherited_SNV
-        File downsampled_ultra_rare_inherited_Indel = step7.downsampled_ultra_rare_inherited_Indel
+        File ultra_rare_inherited_tsv = filterUltraRareInheritedVariantsHail.ultra_rare_inherited_tsv
+        File downsampled_ultra_rare_inherited_SNV = filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_SNV
+        File downsampled_ultra_rare_inherited_Indel = filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_Indel
 
-        File ultra_rare_parents_tsv = step7.ultra_rare_parents_tsv
-        File downsampled_ultra_rare_parents_SNV = step7.downsampled_ultra_rare_parents_SNV
-        File downsampled_ultra_rare_parents_Indel = step7.downsampled_ultra_rare_parents_Indel
+        File ultra_rare_parents_tsv = filterUltraRareParentsVariantsHail.ultra_rare_parents_tsv
+        File downsampled_ultra_rare_parents_SNV = filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_SNV
+        File downsampled_ultra_rare_parents_Indel = filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_Indel
     }    
 }
