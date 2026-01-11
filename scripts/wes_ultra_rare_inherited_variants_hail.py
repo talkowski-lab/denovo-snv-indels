@@ -295,10 +295,10 @@ def annotate_affected_unaffected_AC(mt, ped_ht):
 
     # Get cohort unaffected/affected het and homvar counts
     mt = mt.annotate_rows(**{
-        "n_het_unaffected": hl.agg.filter(mt.phenotype=='1', hl.agg.sum(mt.GT.is_het())),
-        "n_hom_var_unaffected": hl.agg.filter(mt.phenotype=='1', hl.agg.sum(mt.GT.is_hom_var())),
-        "n_het_affected": hl.agg.filter(mt.phenotype=='2', hl.agg.sum(mt.GT.is_het())),
-        "n_hom_var_affected": hl.agg.filter(mt.phenotype=='2', hl.agg.sum(mt.GT.is_hom_var()))
+        "n_het_unaffected": hl.agg.filter(mt.phenotype==1, hl.agg.sum(mt.GT.is_het())),
+        "n_hom_var_unaffected": hl.agg.filter(mt.phenotype==1, hl.agg.sum(mt.GT.is_hom_var())),
+        "n_het_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_het())),
+        "n_hom_var_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_hom_var()))
     })
     mt = mt.annotate_rows(**{
         "unaffected_AC": mt.n_het_unaffected + 2*mt.n_hom_var_unaffected,
