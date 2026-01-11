@@ -35,6 +35,7 @@ workflow filterUltraRareInheritedVariants {
         Float gnomad_af_threshold=0.001
         Float cohort_af_threshold=0.001
         Int cohort_ac_threshold=20
+        Int? affected_ac_threshold
     }
 
     scatter (vcf_file in vep_vcf_files) {
@@ -88,10 +89,10 @@ workflow filterUltraRareInheritedVariants {
                 hail_docker=hail_docker,
                 gnomad_af_threshold=gnomad_af_threshold,
                 cohort_af_threshold=cohort_af_threshold,
-                cohort_ac_threshold=cohort_ac_threshold
+                affected_ac_threshold=affected_ac_threshold
         }
     }
-    
+
     call helpers.mergeResultsPython as mergeUltraRareInherited {
         input:
             tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_inherited_tsv,
@@ -135,7 +136,7 @@ task hailUltraRareInheritedFilteringRemote {
         String hail_docker
         Float gnomad_af_threshold
         Float cohort_af_threshold
-        Int cohort_ac_threshold
+        Int? affected_ac_threshold
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -165,7 +166,7 @@ task hailUltraRareInheritedFilteringRemote {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
+    command <<<
         curl ~{hail_ultra_rare_inherited_filtering_script} > hail_ultra_rare_inherited_filtering_script.py
         python3 hail_ultra_rare_inherited_filtering_script.py \
             --ped-uri ~{ped_sex_qc} \
@@ -173,9 +174,9 @@ task hailUltraRareInheritedFilteringRemote {
             --vep-vcf-uri ~{vep_vcf_file} \
             --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
-            --cohort-ac-threshold ~{cohort_ac_threshold} \
+            ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
             --mem ~{memory}
-    }
+    >>>
 
     String prefix = basename(filtered_mt, ".mt")
     output {

@@ -41,7 +41,8 @@ def parse_args():
     add("--gnomad-af-threshold", type=float, default=0.001)
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
-    add("--mem", type=float)
+    add("--affected-ac-threshold", type=int, default=None)  # Optional
+    add("--mem", type=float, default=4)
 
     return p.parse_args()
 
@@ -54,6 +55,7 @@ ped_uri = args.ped_uri
 gnomad_af_threshold = args.gnomad_af_threshold
 cohort_ac_threshold = args.cohort_ac_threshold
 cohort_af_threshold = args.cohort_af_threshold
+affected_ac_threshold = args.affected_ac_threshold
 mem = args.mem
 
 prefix = os.path.basename(filt_mt_uri).split('.mt')[0]
@@ -278,9 +280,34 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
     
     return mt.annotate_rows(**{vep_root: vep_data}) if isinstance(mt, hl.MatrixTable) else mt.annotate(**{vep_root: vep_data})
 
+def apply_cohort_ac_af_filters(mt, cohort_ac_threshold, cohort_af_threshold):
+    return mt.filter_rows(
+        (mt.info.cohort_AC <= cohort_ac_threshold) |
+        (mt.info.cohort_AF <= cohort_af_threshold)
+    )
+
+def apply_affected_ac_filter(mt, affected_ac_threshold):
+    return mt.filter_rows(mt.affected_AC <= affected_ac_threshold)
+
+def annotate_affected_unaffected_AC(mt, ped_ht):
+    # Annotate phenotype in MT
+    mt = mt.annotate_cols(phenotype=ped_ht[mt.s].phenotype)
+
+    # Get cohort unaffected/affected het and homvar counts
+    mt = mt.annotate_rows(**{
+        "n_het_unaffected": hl.agg.filter(mt.phenotype=='1', hl.agg.sum(mt.GT.is_het())),
+        "n_hom_var_unaffected": hl.agg.filter(mt.phenotype=='1', hl.agg.sum(mt.GT.is_hom_var())),
+        "n_het_affected": hl.agg.filter(mt.phenotype=='2', hl.agg.sum(mt.GT.is_het())),
+        "n_hom_var_affected": hl.agg.filter(mt.phenotype=='2', hl.agg.sum(mt.GT.is_hom_var()))
+    })
+    mt = mt.annotate_rows(**{
+        "unaffected_AC": mt.n_het_unaffected + 2*mt.n_hom_var_unaffected,
+        "affected_AC": mt.n_het_affected + 2*mt.n_hom_var_affected,
+    })
+
+    return mt
 
 # Load
-
 header = hl.get_vcf_metadata(vep_vcf_uri)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
@@ -295,35 +322,45 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
                                                         for i, col in enumerate(csq_columns)})))
 
 filt_mt=filt_mt.annotate_rows(vep=hl.Struct(transcript_consequences = transcript_consequences_strs))
-
-filt_mt = filt_mt.filter_rows(filt_mt.gnomad_non_neuro_AF>gnomad_af_threshold, keep=False)
-
-
-filt_mt = filt_mt.filter_rows((filt_mt.info.cohort_AC<=cohort_ac_threshold) |
-                              (filt_mt.info.cohort_AF<=cohort_af_threshold))
-
 filt_mt = filter_vep_to_canonical_transcripts(filt_mt)
-
 filt_mt = process_consequences(filt_mt)
 filt_mt = filt_mt.annotate_rows(worst_csq=filt_mt.vep.worst_csq)
 
+# GnomAD AF filter
+base_mt = filt_mt.filter_rows(filt_mt.gnomad_non_neuro_AF > gnomad_af_threshold, keep=False)
+
+ped_ht = hl.import_table(ped_uri, delimiter='\t',
+                          types={'phenotype': hl.tfloat, 'sex': hl.tfloat}).key_by('sample_id')
+base_mt = annotate_affected_unaffected_AC(base_mt, ped_ht)
+
+# Apply cohort AC, AF filters (for outputs except inh_td)
+ultra_rare_mt = apply_cohort_ac_af_filters(
+    base_mt,
+    cohort_ac_threshold,
+    cohort_af_threshold
+)
+
 ultra_rare_filt_mt_uri = f"{prefix}.ultra.rare.mt"
-filt_mt = filt_mt.checkpoint(ultra_rare_filt_mt_uri, overwrite=True)
+ultra_rare_mt = ultra_rare_mt.checkpoint(ultra_rare_filt_mt_uri, overwrite=True)
 
+# Pedigree
 ped_df = pd.read_csv(ped_uri, sep='\t')
-
 cropped_ped_uri = f"{ped_uri.split('.ped')[0]}_cropped.ped"
-ped_df.iloc[:,:6].to_csv(cropped_ped_uri, index=False, sep='\t')
+ped_df.iloc[:, :6].to_csv(cropped_ped_uri, index=False, sep='\t')
 
 pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter='\t')
-
 complete_trio_samples = [trio.s for trio in pedigree.complete_trios()] + \
-    [trio.pat_id for trio in pedigree.complete_trios()] + \
-    [trio.mat_id for trio in pedigree.complete_trios()]
-
+                        [trio.pat_id for trio in pedigree.complete_trios()] + \
+                        [trio.mat_id for trio in pedigree.complete_trios()]
 trio_pedigree = pedigree.filter_to(complete_trio_samples)
 
-td = hl.trio_matrix(filt_mt, trio_pedigree, complete_trios=True)
+if affected_ac_threshold is not None:
+    logger.info(f"Applying affected_AC <= {affected_ac_threshold} for inherited-TDT only")
+    inh_mt = apply_affected_ac_filter(base_mt, affected_ac_threshold)
+else:
+    inh_mt = apply_cohort_ac_af_filters(base_mt, cohort_ac_threshold, cohort_af_threshold)
+
+td = hl.trio_matrix(inh_mt, trio_pedigree, complete_trios=True)
 
 td = parent_aware_t_u_annotations_v4(td)
 
@@ -331,7 +368,7 @@ td = td.annotate_entries(total_t_from_parents = td.t_from_dad + td.t_from_mom,
                         total_u_from_parents = td.u_from_dad + td.u_from_mom)
 
 # Original function for site-level
-tdt_table_filtered = hl.transmission_disequilibrium_test(filt_mt, trio_pedigree)
+tdt_table_filtered = hl.transmission_disequilibrium_test(inh_mt, trio_pedigree)
 
 td = td.annotate_rows(tdt=tdt_table_filtered[td.row_key])
 
@@ -340,17 +377,17 @@ td = td.checkpoint(td_mt_uri, overwrite=True)
 
 td = hl.read_matrix_table(td_mt_uri)
 
-syn_td = td.filter_rows(td.worst_csq.most_severe_consequence=='synonymous_variant')
+# syn_td = td.filter_rows(td.worst_csq.most_severe_consequence=='synonymous_variant')
 
-syn_td = syn_td.annotate_cols(total_t_from_dad=hl.agg.sum(syn_td.t_from_dad),
-                    total_u_from_dad=hl.agg.sum(syn_td.u_from_dad),
-                    total_t_from_mom=hl.agg.sum(syn_td.t_from_mom),
-                    total_u_from_mom=hl.agg.sum(syn_td.u_from_mom))
+# syn_td = syn_td.annotate_cols(total_t_from_dad=hl.agg.sum(syn_td.t_from_dad),
+#                     total_u_from_dad=hl.agg.sum(syn_td.u_from_dad),
+#                     total_t_from_mom=hl.agg.sum(syn_td.t_from_mom),
+#                     total_u_from_mom=hl.agg.sum(syn_td.u_from_mom))
 
-syn_td = syn_td.annotate_rows(
-    t_total = hl.agg.sum(syn_td.t_from_dad + syn_td.t_from_mom + syn_td.t_indeterminate),
-    u_total = hl.agg.sum(syn_td.u_from_dad + syn_td.u_from_mom + syn_td.u_indeterminate)
-)
+# syn_td = syn_td.annotate_rows(
+#     t_total = hl.agg.sum(syn_td.t_from_dad + syn_td.t_from_mom + syn_td.t_indeterminate),
+#     u_total = hl.agg.sum(syn_td.u_from_dad + syn_td.u_from_mom + syn_td.u_indeterminate)
+# )
 
 
 ## Ultra-rare inherited ##
@@ -367,15 +404,14 @@ inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
 inh_td.entries().flatten().export(inh_output_uri)
 
 ## Ultra-rare in cases/controls ##
-tm = hl.trio_matrix(filt_mt, pedigree)
-ped_ht = hl.import_table(cropped_ped_uri, types={'phenotype': hl.tfloat, 'sex': hl.tfloat})
+tm = hl.trio_matrix(ultra_rare_mt, pedigree)
 
 # Cases not in trio
 non_trio_cases = ped_ht.filter((ped_ht.phenotype==2) &
              (~hl.array(complete_trio_samples).contains(ped_ht.sample_id))).sample_id.collect()
 if len(non_trio_cases)==0:
     non_trio_cases = ['']
-non_trio_cases_mt = filt_mt.filter_cols(hl.array(non_trio_cases).contains(filt_mt.s))
+non_trio_cases_mt = ultra_rare_mt.filter_cols(hl.array(non_trio_cases).contains(ultra_rare_mt.s))
 non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
 # Output coding only
 non_trio_cases_mt = non_trio_cases_mt.filter_rows(hl.array(coding_variants).contains(
