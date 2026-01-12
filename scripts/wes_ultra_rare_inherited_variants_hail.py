@@ -42,6 +42,7 @@ def parse_args():
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
     add("--affected-ac-threshold", type=int, default=None)  # Optional
+    add("--coding-only", type=bool, default=True)
     add("--mem", type=float, default=4)
 
     return p.parse_args()
@@ -56,6 +57,7 @@ gnomad_af_threshold = args.gnomad_af_threshold
 cohort_ac_threshold = args.cohort_ac_threshold
 cohort_af_threshold = args.cohort_af_threshold
 affected_ac_threshold = args.affected_ac_threshold
+coding_only = args.coding_only
 mem = args.mem
 
 prefix = os.path.basename(filt_mt_uri).split('.mt')[0]
@@ -396,8 +398,9 @@ inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_ent
                   (hl.is_defined(inh_td.mother_entry.GT)) |
                   (hl.is_defined(inh_td.father_entry.GT)))>0)
 # Output coding only
-inh_td = inh_td.filter_rows(hl.array(coding_variants).contains(
-    inh_td.worst_csq.most_severe_consequence))
+if coding_only:
+    inh_td = inh_td.filter_rows(hl.array(coding_variants).contains(
+        inh_td.worst_csq.most_severe_consequence))
 inh_td_uri = f"{prefix}.ultra.rare.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_uri, overwrite=True)
 inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
@@ -414,8 +417,9 @@ if len(non_trio_cases)==0:
 non_trio_cases_mt = ultra_rare_mt.filter_cols(hl.array(non_trio_cases).contains(ultra_rare_mt.s))
 non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
 # Output coding only
-non_trio_cases_mt = non_trio_cases_mt.filter_rows(hl.array(coding_variants).contains(
-    non_trio_cases_mt.worst_csq.most_severe_consequence))
+if coding_only:
+    non_trio_cases_mt = non_trio_cases_mt.filter_rows(hl.array(coding_variants).contains(
+        non_trio_cases_mt.worst_csq.most_severe_consequence))
 non_trio_cases_mt_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
 non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrite=True)
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
@@ -431,8 +435,9 @@ control_tm = tm.filter_cols((hl.array(control_samples).contains(tm.id)) &
                            (~hl.array(parent_samples).contains(tm.id)))
 control_tm = control_tm.filter_entries(control_tm.proband_entry.GT.is_non_ref())
 # Output coding only
-control_tm = control_tm.filter_rows(hl.array(coding_variants).contains(
-    control_tm.worst_csq.most_severe_consequence))
+if coding_only:
+    control_tm = control_tm.filter_rows(hl.array(coding_variants).contains(
+        control_tm.worst_csq.most_severe_consequence))
 control_tm_uri = f"{prefix}.ultra.rare.controls.mt"
 control_tm = control_tm.checkpoint(control_tm_uri, overwrite=True)
 control_output_uri = f"{prefix}.ultra.rare.controls.tsv.gz"
