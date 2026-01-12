@@ -36,6 +36,7 @@ workflow filterUltraRareInheritedVariants {
         Float cohort_af_threshold=0.001
         Int cohort_ac_threshold=20
         Int? affected_ac_threshold
+        Boolean coding_only=true
     }
 
     scatter (vcf_file in vep_vcf_files) {
@@ -89,7 +90,8 @@ workflow filterUltraRareInheritedVariants {
                 hail_docker=hail_docker,
                 gnomad_af_threshold=gnomad_af_threshold,
                 cohort_af_threshold=cohort_af_threshold,
-                affected_ac_threshold=affected_ac_threshold
+                affected_ac_threshold=affected_ac_threshold,
+                coding_only=coding_only
         }
     }
 
@@ -137,6 +139,7 @@ task hailUltraRareInheritedFilteringRemote {
         Float gnomad_af_threshold
         Float cohort_af_threshold
         Int? affected_ac_threshold
+        Boolean coding_only
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -175,6 +178,7 @@ task hailUltraRareInheritedFilteringRemote {
             --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
             ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
+            --coding-only ~{coding_only} \
             --mem ~{memory}
     >>>
 
