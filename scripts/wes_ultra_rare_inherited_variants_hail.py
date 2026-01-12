@@ -42,7 +42,7 @@ def parse_args():
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
     add("--affected-ac-threshold", type=int, default=None)  # Optional
-    add("--coding-only", type=bool, default=True)
+    add("--coding-only", action="store_true")
     add("--mem", type=float, default=4)
 
     return p.parse_args()
