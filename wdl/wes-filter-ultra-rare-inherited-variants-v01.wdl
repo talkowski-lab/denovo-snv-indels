@@ -36,6 +36,7 @@ workflow filterUltraRareInheritedVariants {
         Float cohort_af_threshold=0.001
         Int cohort_ac_threshold=20
         Int? affected_ac_threshold
+        Float? affected_af_threshold
         Boolean coding_only=true
     }
 
@@ -91,6 +92,7 @@ workflow filterUltraRareInheritedVariants {
                 gnomad_af_threshold=gnomad_af_threshold,
                 cohort_af_threshold=cohort_af_threshold,
                 affected_ac_threshold=affected_ac_threshold,
+                affected_af_threshold=affected_af_threshold,
                 coding_only=coding_only
         }
     }
@@ -139,6 +141,7 @@ task hailUltraRareInheritedFilteringRemote {
         Float gnomad_af_threshold
         Float cohort_af_threshold
         Int? affected_ac_threshold
+        Float? affected_af_threshold
         Boolean coding_only
         RuntimeAttr? runtime_attr_override
     }
@@ -178,6 +181,7 @@ task hailUltraRareInheritedFilteringRemote {
             --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
             ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
+            ~{if defined(affected_af_threshold) then "--affected-ac-threshold ~{affected_af_threshold}" else ""} \
             ~{true='--coding-only' false='' coding_only} \
             --mem ~{memory}
     >>>

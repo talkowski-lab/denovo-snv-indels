@@ -42,6 +42,7 @@ def parse_args():
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
     add("--affected-ac-threshold", type=int, default=None)  # Optional
+    add("--affected-af-threshold", type=float, default=None)  # Optional
     add("--coding-only", action="store_true")
     add("--mem", type=float, default=4)
 
@@ -57,6 +58,7 @@ gnomad_af_threshold = args.gnomad_af_threshold
 cohort_ac_threshold = args.cohort_ac_threshold
 cohort_af_threshold = args.cohort_af_threshold
 affected_ac_threshold = args.affected_ac_threshold
+affected_af_threshold = args.affected_af_threshold
 coding_only = args.coding_only
 mem = args.mem
 
@@ -294,6 +296,10 @@ def apply_affected_ac_filter(mt, affected_ac_threshold):
 def annotate_affected_unaffected_AC(mt, ped_ht):
     # Annotate phenotype in MT
     mt = mt.annotate_cols(phenotype=ped_ht[mt.s].phenotype)
+    
+    # Pre-calculate counts of individuals to determine AN
+    n_unaffected = ped_ht.filter(ped_ht.phenotype == 1).count()
+    n_affected = ped_ht.filter(ped_ht.phenotype == 2).count()
 
     # Get cohort unaffected/affected het and homvar counts
     mt = mt.annotate_rows(**{
@@ -302,10 +308,17 @@ def annotate_affected_unaffected_AC(mt, ped_ht):
         "n_het_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_het())),
         "n_hom_var_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_hom_var()))
     })
-    mt = mt.annotate_rows(**{
-        "unaffected_AC": mt.n_het_unaffected + 2*mt.n_hom_var_unaffected,
-        "affected_AC": mt.n_het_affected + 2*mt.n_hom_var_affected,
-    })
+    
+    mt = mt.annotate_rows(
+        unaffected_AC = mt.n_het_unaffected + 2*mt.n_hom_var_unaffected,
+        affected_AC = mt.n_het_affected + 2*mt.n_hom_var_affected
+    )
+
+    # Calculate AF, handling division by zero if a group is empty
+    mt = mt.annotate_rows(
+        unaffected_AF = hl.if_else(n_unaffected > 0, mt.unaffected_AC / (2 * n_unaffected), 0.0),
+        affected_AF = hl.if_else(n_affected > 0, mt.affected_AC / (2 * n_affected), 0.0)
+    )
 
     return mt
 
@@ -335,6 +348,17 @@ ped_ht = hl.import_table(ped_uri, delimiter='\t',
                           types={'phenotype': hl.tfloat, 'sex': hl.tfloat}).key_by('sample_id')
 base_mt = annotate_affected_unaffected_AC(base_mt, ped_ht)
 
+affected_ac_cond = (base_mt.affected_AC <= affected_ac_threshold) if affected_ac_threshold is not None else False
+affected_af_cond = (base_mt.affected_AF <= affected_af_threshold) if affected_af_threshold is not None else False
+
+# Apply affected AC or AF filters if defined
+if affected_ac_threshold is not None or affected_af_threshold is not None:
+    logger.info(f"Applying Affected AC <= {affected_ac_threshold} OR Affected AF <= {affected_af_threshold}")
+    case_filtered_mt = base_mt.filter_rows(affected_ac_cond | affected_af_cond)
+else:
+    # Fallback to standard cohort filters if no affected filters defined
+    case_filtered_mt = apply_cohort_ac_af_filters(base_mt, cohort_ac_threshold, cohort_af_threshold)
+
 # Apply cohort AC, AF filters (for outputs except inh_td)
 ultra_rare_mt = apply_cohort_ac_af_filters(
     base_mt,
@@ -356,13 +380,7 @@ complete_trio_samples = [trio.s for trio in pedigree.complete_trios()] + \
                         [trio.mat_id for trio in pedigree.complete_trios()]
 trio_pedigree = pedigree.filter_to(complete_trio_samples)
 
-if affected_ac_threshold is not None:
-    logger.info(f"Applying affected_AC <= {affected_ac_threshold} for inherited-TDT only")
-    inh_mt = apply_affected_ac_filter(base_mt, affected_ac_threshold)
-else:
-    inh_mt = apply_cohort_ac_af_filters(base_mt, cohort_ac_threshold, cohort_af_threshold)
-
-td = hl.trio_matrix(inh_mt, trio_pedigree, complete_trios=True)
+td = hl.trio_matrix(case_filtered_mt, trio_pedigree, complete_trios=True)
 
 td = parent_aware_t_u_annotations_v4(td)
 
@@ -370,7 +388,7 @@ td = td.annotate_entries(total_t_from_parents = td.t_from_dad + td.t_from_mom,
                         total_u_from_parents = td.u_from_dad + td.u_from_mom)
 
 # Original function for site-level
-tdt_table_filtered = hl.transmission_disequilibrium_test(inh_mt, trio_pedigree)
+tdt_table_filtered = hl.transmission_disequilibrium_test(case_filtered_mt, trio_pedigree)
 
 td = td.annotate_rows(tdt=tdt_table_filtered[td.row_key])
 
@@ -414,7 +432,7 @@ non_trio_cases = ped_ht.filter((ped_ht.phenotype==2) &
              (~hl.array(complete_trio_samples).contains(ped_ht.sample_id))).sample_id.collect()
 if len(non_trio_cases)==0:
     non_trio_cases = ['']
-non_trio_cases_mt = ultra_rare_mt.filter_cols(hl.array(non_trio_cases).contains(ultra_rare_mt.s))
+non_trio_cases_mt = case_filtered_mt.filter_cols(hl.array(non_trio_cases).contains(case_filtered_mt.s))
 non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
 # Output coding only
 if coding_only:
