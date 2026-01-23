@@ -165,6 +165,7 @@ task hailUltraRareInheritedFilteringRemote {
         String hail_ultra_rare_inherited_filtering_script
         String hail_docker
         Float gnomad_non_neuro_af_threshold
+        Int cohort_ac_threshold
         Float cohort_af_threshold
         Int? affected_ac_threshold
         Float? affected_af_threshold
