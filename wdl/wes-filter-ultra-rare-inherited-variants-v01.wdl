@@ -20,10 +20,23 @@ workflow filterUltraRareInheritedVariants {
         String mpc_ht_uri
         String gnomad_ht_uri
         String hail_annotation_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_denovo_annotation.py"
+        
         # step2
         File lcr_uri
         String hail_basic_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_denovo_basic_filtering.py"
         Float call_rate_threshold=0.8
+
+        # step2: Hardcoded filters defaults
+        Int min_dp = 7
+        Int max_dp = 1000
+        Int min_gq = 25
+        Int min_pl = 25
+        Int female_min_dp = 10
+        Int male_auto_min_dp = 10
+        Float het_ab_threshold = 0.25
+        Float het_pab_threshold = 0.000000001
+        Float informative_read_threshold = 0.9
+        Float phwe_threshold = 0.000000000001
 
         File ped_sex_qc
         String cohort_prefix
@@ -60,6 +73,7 @@ workflow filterUltraRareInheritedVariants {
                 mt_uri=step1.annot_mt,
                 hail_docker=hail_docker
         }
+
         call step2.hailBasicFilteringRemote as step2 {
             input:
                 lcr_uri=lcr_uri,
@@ -71,7 +85,18 @@ workflow filterUltraRareInheritedVariants {
                 hail_basic_filtering_script=hail_basic_filtering_script,
                 call_rate_threshold=call_rate_threshold,
                 genome_build=genome_build,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                # Hardcoded filters
+                min_dp=min_dp,
+                max_dp=max_dp,
+                min_gq=min_gq,
+                min_pl=min_pl,
+                female_min_dp=female_min_dp,
+                male_auto_min_dp=male_auto_min_dp,
+                het_ab_threshold=het_ab_threshold,
+                het_pab_threshold=het_pab_threshold,
+                informative_read_threshold=informative_read_threshold,
+                phwe_threshold=phwe_threshold
         }
 
         call helpers.getHailMTSize as getStep2MTSize {
@@ -85,7 +110,7 @@ workflow filterUltraRareInheritedVariants {
                 filtered_mt=step2.filtered_mt,
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                vep_vcf_file=vep_vcf_files[0],
+                vep_vcf_file=vcf_file, # Fixed reference to current scattered file
                 cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
@@ -128,6 +153,7 @@ workflow filterUltraRareInheritedVariants {
     }
 }
 
+# (hailUltraRareInheritedFilteringRemote task remains as provided)
 
 task hailUltraRareInheritedFilteringRemote {
     input {

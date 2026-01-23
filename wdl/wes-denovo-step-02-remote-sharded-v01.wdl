@@ -22,6 +22,19 @@ workflow step2 {
         String bucket_id
         String genome_build
         Float call_rate_threshold=0.8
+
+        # Hardcoded filters defaults
+        Int min_dp = 7
+        Int max_dp = 1000
+        Int min_gq = 25
+        Int min_pl = 25
+        Int female_min_dp = 10
+        Int male_auto_min_dp = 10
+        Float het_ab_threshold = 0.25
+        Float het_pab_threshold = 0.000000001
+        Float informative_read_threshold = 0.9
+        Float phwe_threshold = 0.000000000001
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -43,6 +56,19 @@ workflow step2 {
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 call_rate_threshold=call_rate_threshold,
+                
+                # Passing parameters to task
+                min_dp=min_dp,
+                max_dp=max_dp,
+                min_gq=min_gq,
+                min_pl=min_pl,
+                female_min_dp=female_min_dp,
+                male_auto_min_dp=male_auto_min_dp,
+                het_ab_threshold=het_ab_threshold,
+                het_pab_threshold=het_pab_threshold,
+                informative_read_threshold=informative_read_threshold,
+                phwe_threshold=phwe_threshold,
+
                 runtime_attr_override=runtime_attr_override
         }
     }
@@ -65,6 +91,18 @@ task hailBasicFilteringRemote {
         String hail_basic_filtering_script
         String hail_docker
         String genome_build
+        # Hardcoded filters
+        Int min_dp
+        Int max_dp
+        Int min_gq
+        Int min_pl
+        Int female_min_dp
+        Int male_auto_min_dp
+        Float het_ab_threshold
+        Float het_pab_threshold
+        Float informative_read_threshold
+        Float phwe_threshold
+
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -95,9 +133,29 @@ task hailBasicFilteringRemote {
     }
 
     command {
+        set -e
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        python3 hail_basic_filtering_script.py ~{annot_mt} ~{cohort_prefix} ~{ped_sex_qc} \
-        ~{cpu_cores} ~{memory} ~{bucket_id} ~{lcr_uri} ~{call_rate_threshold} ~{genome_build}
+        
+        python3 hail_basic_filtering_script.py \
+            --annot_mt ~{annot_mt} \
+            --cohort_prefix ~{cohort_prefix} \
+            --ped_uri ~{ped_sex_qc} \
+            --cores ~{cpu_cores} \
+            --mem ~{memory} \
+            --bucket_id ~{bucket_id} \
+            --lcr_uri ~{lcr_uri} \
+            --call_rate_threshold ~{call_rate_threshold} \
+            --genome_build ~{genome_build} \
+            --min_dp ~{min_dp} \
+            --max_dp ~{max_dp} \
+            --min_gq ~{min_gq} \
+            --min_pl ~{min_pl} \
+            --female_min_dp ~{female_min_dp} \
+            --male_auto_min_dp ~{male_auto_min_dp} \
+            --het_ab_threshold ~{het_ab_threshold} \
+            --het_pab_threshold ~{het_pab_threshold} \
+            --informative_read_threshold ~{informative_read_threshold} \
+            --phwe_threshold ~{phwe_threshold}
     }
 
     String prefix = basename(annot_mt, "_wes_denovo_annot.mt")

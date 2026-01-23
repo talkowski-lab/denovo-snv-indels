@@ -12,18 +12,53 @@ import datetime
 import pandas as pd
 import hail as hl
 import numpy as np
-import sys
+import argparse
 import os
 
-annot_mt = sys.argv[1]
-cohort_prefix = sys.argv[2]
-ped_uri = sys.argv[3]
-cores = sys.argv[4]
-mem = int(np.floor(float(sys.argv[5])))
-bucket_id = sys.argv[6]
-lcr_uri = sys.argv[7]
-call_rate_threshold = float(sys.argv[8])
-genome_build = sys.argv[9]
+parser = argparse.ArgumentParser(description="Basic filtering for WES de novo calling")
+parser.add_argument("--annot_mt", required=True, help="Input MatrixTable")
+parser.add_argument("--cohort_prefix", required=True)
+parser.add_argument("--ped_uri", required=True)
+parser.add_argument("--cores", default="8")
+parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
+parser.add_argument("--bucket_id", required=True)
+parser.add_argument("--lcr_uri", required=True)
+parser.add_argument("--call_rate_threshold", type=float, default=0.95)
+parser.add_argument("--genome_build", default="GRCh38")
+
+# Parameters for hardcoded filters
+parser.add_argument("--min_dp", type=int, default=7)
+parser.add_argument("--max_dp", type=int, default=1000)
+parser.add_argument("--min_gq", type=int, default=25)
+parser.add_argument("--min_pl", type=int, default=25)
+parser.add_argument("--female_min_dp", type=int, default=10)
+parser.add_argument("--male_auto_min_dp", type=int, default=10)
+parser.add_argument("--het_ab_threshold", type=float, default=0.25)
+parser.add_argument("--het_pab_threshold", type=float, default=0.000000001)
+parser.add_argument("--informative_read_threshold", type=float, default=0.9)
+parser.add_argument("--phwe_threshold", type=float, default=0.000000000001)
+
+args = parser.parse_args()
+
+annot_mt = args.annot_mt
+cohort_prefix = args.cohort_prefix
+ped_uri = args.ped_uri
+cores = args.cores
+mem = args.mem
+bucket_id = args.bucket_id
+lcr_uri = args.lcr_uri
+call_rate_threshold = args.call_rate_threshold
+genome_build = args.genome_build
+min_dp = args.min_dp
+max_dp = args.max_dp
+min_gq = args.min_gq
+min_pl = args.min_pl
+female_min_dp = args.female_min_dp
+male_auto_min_dp = args.male_auto_min_dp
+het_ab_threshold = args.het_ab_threshold
+het_pab_threshold = args.het_pab_threshold
+informative_read_threshold = args.informative_read_threshold
+phwe_threshold = args.phwe_threshold
 
 prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
@@ -65,11 +100,11 @@ mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
 mt = mt.filter_rows((hl.len(mt.filters) == 0) | (~hl.is_defined(mt.filters)))
 
 mt = mt.filter_entries( 
-        (mt.DP < 7) | 
-        (mt.DP > 1000) |
-        ((mt.GT.is_hom_ref()) & (mt.GQ < 25) ) |
-        ((mt.GT.is_hom_var()) & (mt.PL[0] < 25) ) |
-        ((mt.GT.is_het()) & (mt.PL[0] < 25) ), 
+        (mt.DP < min_dp) | 
+        (mt.DP > max_dp) |
+        ((mt.GT.is_hom_ref()) & (mt.GQ < min_gq) ) |
+        ((mt.GT.is_hom_var()) & (mt.PL[0] < min_pl) ) |
+        ((mt.GT.is_het()) & (mt.PL[0] < min_pl) ), 
           keep = False
         )
 
@@ -90,17 +125,17 @@ mt = mt.drop('variant_qc')
 # - Het calls in males in hemizygous regions
 tmp_ped = pd.read_csv(ped_uri, sep='\t')
 # check tmp_ped number of columns
-if len(tmp_ped) > 6:
+if len(tmp_ped.columns) > 6:
     tmp_ped = tmp_ped.iloc[:,:6]
     
 # subset tmp_ped to samples in mt
 samps = mt.s.collect()
 tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
-tmp_ped = tmp_ped.drop_duplicates('sample_id')    
+tmp_ped = tmp_ped.drop_duplicates(tmp_ped.columns[1])    
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
-ped_uri = f"{prefix}.ped"
-ped = hl.import_table(ped_uri, impute=True, delimiter='\t')
+ped_uri_processed = f"{prefix}.ped"
+ped = hl.import_table(ped_uri_processed, impute=True, delimiter='\t')
 
 original_cols = list(ped.row.keys())
 new_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
@@ -114,9 +149,9 @@ mt = mt.annotate_cols(reported_sex = ped[mt.s].sex)
 mt = mt.annotate_cols(is_female = (mt.reported_sex == 2))
 
 mt = mt.filter_entries( 
-        ((mt.is_female == True) & (mt.DP < 10) ) |
+        ((mt.is_female == True) & (mt.DP < female_min_dp) ) |
         ((mt.is_female == True) & (mt.locus.in_y_nonpar()) ) |
-        ((mt.is_female == False) & (mt.locus.in_autosome_or_par()) & (mt.DP < 10) ) |
+        ((mt.is_female == False) & (mt.locus.in_autosome_or_par()) & (mt.DP < male_auto_min_dp) ) |
         ((mt.is_female == False) & (mt.GT.is_het()) & ( mt.locus.in_x_nonpar() | mt.locus.in_y_nonpar() ) ), 
            keep = False)
 
@@ -128,25 +163,25 @@ mt = mt.drop('variant_qc') # need to recalculate later
 ## Miscellaneous filters
 
 # filter for het allele balance of 0.25 or more
-mt = mt.filter_entries(mt.GT.is_het() & (mt.AD[1] < (0.25 * mt.DP)), keep = False)
+mt = mt.filter_entries(mt.GT.is_het() & (mt.AD[1] < (het_ab_threshold * mt.DP)), keep = False)
 mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
 mt = mt.drop('variant_qc')
 
 # filter Het pAB of 0
-mt = mt.filter_entries(mt.GT.is_het() & (mt.pAB < 0.000000001), keep = False)
+mt = mt.filter_entries(mt.GT.is_het() & (mt.pAB < het_pab_threshold), keep = False)
 mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
 mt = mt.drop('variant_qc')
 
 # keep only Het informative reads
-mt = mt.filter_entries(mt.GT.is_het() & (hl.sum(mt.AD) < (0.9 * mt.DP)), keep = False)
+mt = mt.filter_entries(mt.GT.is_het() & (hl.sum(mt.AD) < (informative_read_threshold * mt.DP)), keep = False)
 mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
 mt = mt.drop('variant_qc')
 
 # keep only Homvar informative reads
-mt = mt.filter_entries(mt.GT.is_hom_var() & (mt.AD[1] < (0.9 * mt.DP)), keep = False)
+mt = mt.filter_entries(mt.GT.is_hom_var() & (mt.AD[1] < (informative_read_threshold * mt.DP)), keep = False)
 mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
 mt = mt.drop('variant_qc')
@@ -201,7 +236,7 @@ mt = sex_aware_variant_annotations_with_pHWE(mt)
 # mt = mt.filter_rows(mt.AC > 0, keep = True)
 
 # Let's impose a modest variant call rate and pHWE filter
-mt = mt.filter_rows((mt.call_rate < call_rate_threshold) | (mt.pHWE < 0.000000000001), keep = False)
+mt = mt.filter_rows((mt.call_rate < call_rate_threshold) | (mt.pHWE < phwe_threshold), keep = False)
 
 # Define sex-aware sample call rate calculation
 def sex_aware_sample_annotations(mt):
