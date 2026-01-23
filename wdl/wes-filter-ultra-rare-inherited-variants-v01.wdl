@@ -45,7 +45,7 @@ workflow filterUltraRareInheritedVariants {
         String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_ultra_rare_inherited_variants_hail.py"
 
         String genome_build='GRCh38'
-        Float gnomad_af_threshold=0.001
+        Float gnomad_non_neuro_af_threshold=0.001
         Float cohort_af_threshold=0.001
         Int cohort_ac_threshold=20
         Int? affected_ac_threshold
@@ -110,11 +110,11 @@ workflow filterUltraRareInheritedVariants {
                 filtered_mt=step2.filtered_mt,
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                vep_vcf_file=vcf_file, # Fixed reference to current scattered file
+                vep_vcf_file=vcf_file,  # Fixed reference to current scattered file
                 cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
-                gnomad_af_threshold=gnomad_af_threshold,
+                gnomad_non_neuro_af_threshold=gnomad_non_neuro_af_threshold,
                 cohort_af_threshold=cohort_af_threshold,
                 affected_ac_threshold=affected_ac_threshold,
                 affected_af_threshold=affected_af_threshold,
@@ -164,7 +164,7 @@ task hailUltraRareInheritedFilteringRemote {
         String cohort_prefix
         String hail_ultra_rare_inherited_filtering_script
         String hail_docker
-        Float gnomad_af_threshold
+        Float gnomad_non_neuro_af_threshold
         Float cohort_af_threshold
         Int? affected_ac_threshold
         Float? affected_af_threshold
@@ -204,7 +204,8 @@ task hailUltraRareInheritedFilteringRemote {
             --ped-uri ~{ped_sex_qc} \
             --filt-mt-uri ~{filtered_mt} \
             --vep-vcf-uri ~{vep_vcf_file} \
-            --gnomad-af-threshold ~{gnomad_af_threshold} \
+            --gnomad-non-neuro-af-threshold ~{gnomad_non_neuro_af_threshold} \
+            --cohort-ac-threshold ~{cohort_ac_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
             ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
             ~{if defined(affected_af_threshold) then "--affected-af-threshold ~{affected_af_threshold}" else ""} \

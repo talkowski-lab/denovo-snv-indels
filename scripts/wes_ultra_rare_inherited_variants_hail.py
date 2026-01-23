@@ -38,7 +38,7 @@ def parse_args():
     add("--filt-mt-uri", required=True)
     add("--ped-uri", required=True)
 
-    add("--gnomad-af-threshold", type=float, default=0.001)
+    add("--gnomad-non-neuro-af-threshold", type=float, default=0.001)
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
     add("--affected-ac-threshold", type=int, default=None)  # Optional
@@ -54,7 +54,7 @@ args = parse_args()
 vep_vcf_uri = args.vep_vcf_uri
 filt_mt_uri = args.filt_mt_uri
 ped_uri = args.ped_uri
-gnomad_af_threshold = args.gnomad_af_threshold
+gnomad_non_neuro_af_threshold = args.gnomad_non_neuro_af_threshold
 cohort_ac_threshold = args.cohort_ac_threshold
 cohort_af_threshold = args.cohort_af_threshold
 affected_ac_threshold = args.affected_ac_threshold
@@ -342,24 +342,26 @@ filt_mt = process_consequences(filt_mt)
 filt_mt = filt_mt.annotate_rows(worst_csq=filt_mt.vep.worst_csq)
 
 # GnomAD AF filter
-base_mt = filt_mt.filter_rows(filt_mt.gnomad_non_neuro_AF > gnomad_af_threshold, keep=False)
+base_mt = filt_mt.filter_rows(filt_mt.gnomad_non_neuro_AF > gnomad_non_neuro_af_threshold, keep=False)
 
 ped_ht = hl.import_table(ped_uri, delimiter='\t',
                           types={'phenotype': hl.tfloat, 'sex': hl.tfloat}).key_by('sample_id')
 base_mt = annotate_affected_unaffected_AC(base_mt, ped_ht)
 
-affected_ac_cond = (base_mt.affected_AC <= affected_ac_threshold) if affected_ac_threshold is not None else False
-affected_af_cond = (base_mt.affected_AF <= affected_af_threshold) if affected_af_threshold is not None else False
-
 # Apply affected AC or AF filters if defined
-if affected_ac_threshold is not None or affected_af_threshold is not None:
-    logger.info(f"Applying Affected AC <= {affected_ac_threshold} OR Affected AF <= {affected_af_threshold}")
-    case_filtered_mt = base_mt.filter_rows(affected_ac_cond | affected_af_cond)
+conditions = []
+if affected_ac_threshold is not None:
+    conditions.append(base_mt.affected_AC <= affected_ac_threshold)
+if affected_af_threshold is not None:
+    conditions.append(base_mt.affected_AF <= affected_af_threshold)
+
+if conditions:
+    case_filtered_mt = base_mt.filter_rows(hl.any(lambda x: x, conditions))
 else:
     # Fallback to standard cohort filters if no affected filters defined
     case_filtered_mt = apply_cohort_ac_af_filters(base_mt, cohort_ac_threshold, cohort_af_threshold)
 
-# Apply cohort AC, AF filters (for outputs except inh_td)
+# Apply cohort AC, AF filters
 ultra_rare_mt = apply_cohort_ac_af_filters(
     base_mt,
     cohort_ac_threshold,
