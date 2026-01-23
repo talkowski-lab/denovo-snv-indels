@@ -181,7 +181,7 @@ task hailUltraRareInheritedFilteringRemote {
             --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
             ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
-            ~{if defined(affected_af_threshold) then "--affected-ac-threshold ~{affected_af_threshold}" else ""} \
+            ~{if defined(affected_af_threshold) then "--affected-af-threshold ~{affected_af_threshold}" else ""} \
             ~{true='--coding-only' false='' coding_only} \
             --mem ~{memory}
     >>>
