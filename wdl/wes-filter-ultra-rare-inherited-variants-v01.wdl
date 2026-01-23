@@ -115,6 +115,7 @@ workflow filterUltraRareInheritedVariants {
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
                 gnomad_non_neuro_af_threshold=gnomad_non_neuro_af_threshold,
+                cohort_ac_threshold=cohort_ac_threshold,
                 cohort_af_threshold=cohort_af_threshold,
                 affected_ac_threshold=affected_ac_threshold,
                 affected_af_threshold=affected_af_threshold,
