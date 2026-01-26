@@ -380,6 +380,8 @@ pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter='\t')
 complete_trio_samples = [trio.s for trio in pedigree.complete_trios()] + \
                         [trio.pat_id for trio in pedigree.complete_trios()] + \
                         [trio.mat_id for trio in pedigree.complete_trios()]
+if len(complete_trio_samples)==0:
+    complete_trio_samples = ['']
 trio_pedigree = pedigree.filter_to(complete_trio_samples)
 
 td = hl.trio_matrix(case_filtered_mt, trio_pedigree, complete_trios=True)
@@ -449,6 +451,8 @@ non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
     [trio.mat_id for trio in pedigree.trios] if s not in ['paternal_id','maternal_id',None]]
 control_samples = ped_ht.filter((ped_ht.phenotype==1)).sample_id.collect()
+if len(parent_samples)==0:
+    parent_samples = ['']
 if len(control_samples)==0:
     control_samples = ['']
 control_tm = tm.filter_cols((hl.array(control_samples).contains(tm.id)) &
