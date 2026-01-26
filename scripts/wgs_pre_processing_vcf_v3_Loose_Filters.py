@@ -114,6 +114,12 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     mt = mt.annotate_cols(pheno=meta[mt.s])
     mt = mt.filter_cols(mt.pheno.Role != '', keep = True)
 
+    # checkpoint after basic filters
+    mt = mt.checkpoint(
+        f"{prefix}.post_basic_filters.mt",
+        overwrite=True
+    )
+
     tmp_ped = pd.read_csv(ped_uri, sep='\t')
     # check ped number of columns
     if len(tmp_ped) > 6:
@@ -133,6 +139,11 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
     mt = mt.semi_join_rows(all_errors.filter(all_errors.mendel_code == 2).key_by('locus', 'alleles'))
+    # checkpoint after mendel_errors
+    mt = mt.checkpoint(
+    f"{prefix}.post_mendelian.mt",
+    overwrite=True
+    )
     # select specific entries for each variant
     trios = hl.import_table(trio_uri, key='SampleID')
     all_errors = all_errors.drop('fam_id', 'mendel_code')
