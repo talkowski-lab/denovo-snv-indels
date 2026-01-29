@@ -108,11 +108,9 @@ task combineOutputVCFs {
     command <<<
         mkdir -p tmp_out_vcfs
 
-        while IFS= read -r f; do
+        printf '%s\n' ~{sep='\n' out_vcfs} | while IFS= read -r f; do
             mv "$f" tmp_out_vcfs/
-        done <<'EOF'
-        ~{sep='\n' out_vcfs}
-        EOF
+        done
     >>>
 
     output {
