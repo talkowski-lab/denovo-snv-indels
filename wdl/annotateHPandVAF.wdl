@@ -109,13 +109,17 @@ task combineOutputVCFs {
         set -eou pipefail
         mkdir -p tmp_out_vcfs
 
-        # iterate over input files safely
-        printf '%s\n' ~{sep='\n' out_vcfs} | while IFS= read -r f; do
+        # write the list of files to a temp text file
+        out_vcfs_list=out_vcfs.list.txt
+        write_lines(~{out_vcfs}, "$out_vcfs_list")
+
+        # safely move each file listed in the text file
+        while IFS= read -r f; do
             mv "$f" tmp_out_vcfs/
-        done
-    >>>
+        done < "$out_vcfs_list"
+>>>
 
     output {
-        Array[File] split_trio_annot_vcfs = glob('tmp_out_vcfs/*')
+        Array[File] split_trio_annot_vcfs = glob("tmp_out_vcfs/*")
     }
 }
