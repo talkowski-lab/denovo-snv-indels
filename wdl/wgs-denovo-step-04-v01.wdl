@@ -169,11 +169,44 @@ task replaceMissingPL {
     
     String output_filename = basename(vcf_file, '.vcf') + '.filled.PL.vcf'
     command <<<
-        set -eou pipefail
-        bcftools +setGT "~{vcf_file}" -Ov -o "~{output_filename}" -- \
-            -t q \
-            -n '0,0,0' \
-            -i 'FMT/PL="."'
+        cat <<EOF > vcf_replace_missing_pl.py
+        #!/usr/bin/env python3
+        import pysam
+        import argparse
+
+        def fill_missing_PL(input_vcf, output_vcf):
+            """
+            Replace PL values that are (None,) with (None, None, None) for all samples in the VCF.
+            """
+            vcf_in = pysam.VariantFile(input_vcf, "r")
+            vcf_out = pysam.VariantFile(output_vcf, "w", header=vcf_in.header)
+
+            for rec in vcf_in:
+                for sample in rec.samples:
+                    pl_val = rec.samples[sample].get("PL")
+                    
+                    # Only replace if it's a single-element tuple containing None
+                    if isinstance(pl_val, tuple) and pl_val == (None,):
+                        rec.samples[sample]["PL"] = (None, None, None)
+
+                vcf_out.write(rec)
+
+            vcf_in.close()
+            vcf_out.close()
+            print(f"Done! PL values (None,) replaced with (None, None, None). Output: {output_vcf}")
+
+
+        if __name__ == "__main__":
+            parser = argparse.ArgumentParser(description="Fill PL values of (None,) with (None,None,None)")
+            parser.add_argument("input_vcf", help="Input VCF file")
+            parser.add_argument("output_vcf", help="Output VCF file")
+
+            args = parser.parse_args()
+
+            fill_missing_PL(args.input_vcf, args.output_vcf)
+        EOF
+
+        python3 vcf_replace_missing_pl.py "~{vcf_file}" "~{output_filename}"
     >>>
 
     output {
