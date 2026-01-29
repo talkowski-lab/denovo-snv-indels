@@ -107,10 +107,15 @@ task combineOutputVCFs {
 
     command <<<
         set -eou pipefail
-        echo "Outputting all VCFs into WDL glob..."
+        mkdir -p tmp_out_vcfs
+
+        # iterate over input files safely
+        printf '%s\n' ~{sep='\n' out_vcfs} | while IFS= read -r f; do
+            mv "$f" tmp_out_vcfs/
+        done
     >>>
 
     output {
-        Array[File] split_trio_annot_vcfs = glob('*.vcf*')
+        Array[File] trio_denovo_vcf = glob('tmp_out_vcfs/*')
     }
 }

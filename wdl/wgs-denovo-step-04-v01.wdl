@@ -103,9 +103,14 @@ task combineOutputVCFs {
         docker: trio_denovo_docker
     }
 
+    String concat_files_string = "\\"~{sep='" "' out_vcfs}\\""
+
     command <<<
+        set -eou pipefail
         mkdir -p tmp_out_vcfs
-        for f in ~{sep=' ' out_vcfs}; do
+
+        # iterate over input files safely
+        printf '%s\n' ~{sep='\n' out_vcfs} | while IFS= read -r f; do
             mv "$f" tmp_out_vcfs/
         done
     >>>
