@@ -172,7 +172,7 @@ task replaceMissingPL {
         set -eou pipefail
         bcftools +setGT "~{vcf_file}" -Ov -o "~{output_filename}" -- \
             -t q \
-            -n '.,.,.' \
+            -n '0,0,0' \
             -i 'FMT/PL="."'
     >>>
 
