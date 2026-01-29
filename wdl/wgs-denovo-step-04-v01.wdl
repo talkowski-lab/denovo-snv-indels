@@ -106,7 +106,7 @@ task combineOutputVCFs {
     command <<<
         mkdir -p tmp_out_vcfs
         for f in ~{sep=' ' out_vcfs}; do
-        mv "$f" tmp_out_vcfs/
+            mv "$f" tmp_out_vcfs/
         done
     >>>
 
