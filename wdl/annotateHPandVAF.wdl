@@ -84,10 +84,10 @@ task annotateVCF {
         set -eou pipefail
         bcftools head ~{vep_vcf_file} > og_header.txt
         grep "FILTER=" og_header.txt > new_header.txt
-        bcftools annotate -h new_header.txt -o ~{clean_vcf} ~{trio_vcf}
+        bcftools annotate -h new_header.txt -o "~{clean_vcf}" "~{trio_vcf}"
 
-        java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o ~{hp_vcf} ~{clean_vcf}
-        bcftools +fill-tags ~{hp_vcf} -Ov -o ~{out_vcf} -- -t VAF 
+        java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o "~{hp_vcf}" "~{clean_vcf}"
+        bcftools +fill-tags "~{hp_vcf}" -Ov -o "~{out_vcf}" -- -t VAF 
     >>>
 
     output {
