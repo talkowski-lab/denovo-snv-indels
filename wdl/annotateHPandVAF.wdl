@@ -107,17 +107,10 @@ task combineOutputVCFs {
 
     command <<<
         set -eou pipefail
-        mkdir -p tmp_out_vcfs
-
-        # Create an array of the files in Bash
-        vcf_files=( ~{sep=' ' out_vcfs} )
-
-        for f in "${vcf_files[@]}"; do
-            mv "$f" tmp_out_vcfs/  
-        done    
+        echo "Outputting all VCFs into WDL glob..."
     >>>
 
     output {
-        Array[File] split_trio_annot_vcfs = glob('tmp_out_vcfs/*')
+        Array[File] split_trio_annot_vcfs = glob('*.vcf*')
     }
 }
