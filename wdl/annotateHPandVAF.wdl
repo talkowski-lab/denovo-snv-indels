@@ -105,10 +105,12 @@ task combineOutputVCFs {
         docker: jvarkit_docker
     }
 
-    command {
+    command <<<
         mkdir -p tmp_out_vcfs
-        mv ~{sep=" " out_vcfs} tmp_out_vcfs/
-    }
+        for f in ~{sep=' ' out_vcfs}; do
+            mv "$f" tmp_out_vcfs/
+        done
+    >>>
 
     output {
         Array[File] split_trio_annot_vcfs = glob('tmp_out_vcfs/*')
