@@ -106,11 +106,15 @@ task combineOutputVCFs {
     }
 
     command <<<
+        set -eou pipefail
         mkdir -p tmp_out_vcfs
 
-        printf '%s\n' ~{sep='\n' out_vcfs} | while IFS= read -r f; do
-            mv "$f" tmp_out_vcfs/
-        done
+        # Create an array of the files in Bash
+        vcf_files=( ~{sep=' ' out_vcfs} )
+
+        for f in "${vcf_files[@]}"; do
+            mv "$f" tmp_out_vcfs/  
+        done    
     >>>
 
     output {
