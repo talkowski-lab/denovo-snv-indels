@@ -110,13 +110,13 @@ task combineOutputVCFs {
         mkdir -p tmp_out_vcfs
 
         # write the list of files to a temp text file
-        out_vcfs_list=out_vcfs.list.txt
-        write_lines(~{out_vcfs}, "$out_vcfs_list")
+        VCFS="~{write_lines(out_vcfs)}"
+        cat $VCFS > vcfs_list.txt
 
         # safely move each file listed in the text file
         while IFS= read -r f; do
             mv "$f" tmp_out_vcfs/
-        done < "$out_vcfs_list"
+        done < "vcfs_list.txt"
 >>>
 
     output {
