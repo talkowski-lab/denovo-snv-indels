@@ -168,7 +168,7 @@ task replaceMissingPL {
     String output_filename = basename(vcf_file, '.vcf') + '.filled.PL.vcf'
     command <<<
         set -eou pipefail
-        bcftools +setGT ~{vcf_file} -Ov -o ~{output_filename} -- \
+        bcftools +setGT "~{vcf_file}" -Ov -o "~{output_filename}" -- \
             -t q \
             -n '.,.,.' \
             -i 'FMT/PL="."'
