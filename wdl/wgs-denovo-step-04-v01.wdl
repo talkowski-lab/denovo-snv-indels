@@ -109,10 +109,14 @@ task combineOutputVCFs {
         set -eou pipefail
         mkdir -p tmp_out_vcfs
 
-        # iterate over input files safely
-        printf '%s\n' ~{sep='\n' out_vcfs} | while IFS= read -r f; do
+        # write the list of files to a temp text file
+        VCFS="~{write_lines(out_vcfs)}"
+        cat $VCFS > vcfs_list.txt
+
+        # safely move each file listed in the text file
+        while IFS= read -r f; do
             mv "$f" tmp_out_vcfs/
-        done
+        done < "vcfs_list.txt"
     >>>
 
     output {
