@@ -116,6 +116,6 @@ task combineOutputVCFs {
     >>>
 
     output {
-        Array[File] trio_denovo_vcf = glob('tmp_out_vcfs/*')
+        Array[File] split_trio_annot_vcfs = glob('tmp_out_vcfs/*')
     }
 }
