@@ -77,15 +77,15 @@ task trio_denovo {
 
     command <<<
         set -eou pipefail
-        sample=$(basename ~{vcf_file} '.vcf' | awk -F "_trio_" '{print $2}') 
+        sample=$(basename "~{vcf_file}" '.vcf' | awk -F "_trio_" '{print $2}') 
         sample="${sample//_HP_VAF/}"
         curl ~{get_sample_pedigree_script} > get_sample_pedigree_script.py
         python3 get_sample_pedigree_script.py ~{ped_uri_trios} $sample
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
-            --in_vcf ~{vcf_file} \
-            --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} \
+            --in_vcf "~{vcf_file}" \
+            --out_vcf "~{basename(vcf_file, '.vcf') + '.denovos.vcf'}" \
             --minDQ ~{minDQ}
-        bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
+        bgzip "~{basename(vcf_file, '.vcf') + '.denovos.vcf'}"
     >>>
 
     output {
@@ -103,10 +103,12 @@ task combineOutputVCFs {
         docker: trio_denovo_docker
     }
 
-    command {
+    command <<<
         mkdir -p tmp_out_vcfs
-        mv ~{sep=" " out_vcfs} tmp_out_vcfs/
-    }
+        for f in ~{sep=' ' out_vcfs}; do
+        mv "$f" tmp_out_vcfs/
+        done
+    >>>
 
     output {
         Array[File] trio_denovo_vcf = glob('tmp_out_vcfs/*')
