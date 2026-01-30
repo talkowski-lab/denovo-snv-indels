@@ -37,7 +37,7 @@ def main():
     res_vcf_paths = glob.glob(os.path.join(args.res_vcf_dir, '*.vcf.gz'))
     trio_variant_keys = DefaultDict(pd.DataFrame)  # key: familyID-sampleID; value: list of "chr_pos_ref_alt"
     for res_vcf_path in res_vcf_paths:
-        trio_key = os.path.basename(res_vcf_path).replace('.denovos.vcf.gz', '').replace('_HP_VAF', '')
+        trio_key = os.path.basename(res_vcf_path).split('_HP_VAF')[0]
         with gzip.open(res_vcf_path, 'rt') as vcf_file:
             for line in vcf_file:
                 if line.startswith('#CHROM'):
