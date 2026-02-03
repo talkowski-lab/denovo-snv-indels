@@ -184,7 +184,11 @@ trio_mat = trio_mat.filter_entries(((hl.is_indel(trio_mat.alleles[0], trio_mat.a
                                         & (trio_mat.father_entry.DPC>=16)) 
                                    | (hl.is_snp(trio_mat.alleles[0], trio_mat.alleles[1])))
 
-ultra_rare_vars_df = trio_mat.entries().to_pandas()
+# ultra_rare_vars_df = trio_mat.entries().to_pandas()
+# Change to export() for memory issues
+tmp_output_uri = f"{cohort_prefix}_ultra_rare_parents_variants_tmp.tsv.gz"
+trio_mat.entries().flatten().export(tmp_output_uri)
+ultra_rare_vars_df = pd.read_csv(tmp_output_uri, compression='gzip', sep='\t')
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['proband.s'].isin(trio_df.SampleID)]
 
@@ -198,8 +202,8 @@ ultra_rare_vars_df = ultra_rare_vars_df.rename(rename_cols, axis=1)
 
 ultra_rare_vars_df['CHROM'] = ultra_rare_vars_df.locus.astype(str).str.split(':').str[0]
 ultra_rare_vars_df['POS'] = ultra_rare_vars_df.locus.astype(str).str.split(':').str[1].astype(int)
-ultra_rare_vars_df['REF'] = ultra_rare_vars_df.alleles.str[0]
-ultra_rare_vars_df['ALT'] = ultra_rare_vars_df.alleles.str[1]
+ultra_rare_vars_df['REF'] = ultra_rare_vars_df.alleles.apply(ast.literal_eval).str[0]  # EDITED AFTER CHANGING TO EXPORT()
+ultra_rare_vars_df['ALT'] = ultra_rare_vars_df.alleles.apply(ast.literal_eval).str[1]  # EDITED AFTER CHANGING TO EXPORT()
 ultra_rare_vars_df['LEN'] = abs(ultra_rare_vars_df.REF.str.len()-ultra_rare_vars_df.ALT.str.len())
 ultra_rare_vars_df['TYPE'] =np.where(ultra_rare_vars_df.LEN==0, 'SNV', 'Indel')
 
@@ -228,7 +232,8 @@ def get_gnomAD_AF(csq, col_num):
         return np.nan
     return csqs[0]
 
-ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan, None: np.nan})#.str.split(',')
+# EDITED AFTER CHANGING TO EXPORT()
+ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan, None: np.nan}).str.split(',')
 
 try:
     header = hl.get_vcf_metadata(vcf_file)
