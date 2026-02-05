@@ -447,16 +447,17 @@ non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrit
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
 non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 
-# Control samples that aren't unaffected parents
-parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
+# Control/unaffected samples that aren't parents in complete trios
+all_parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
     [trio.mat_id for trio in pedigree.trios] if s not in ['paternal_id','maternal_id',None]]
+complete_trio_parent_samples = list(np.intersect1d(all_parent_samples, complete_trio_samples))
 control_samples = ped_ht.filter((ped_ht.phenotype==1)).sample_id.collect()
-if len(parent_samples)==0:
-    parent_samples = ['']
+if len(complete_trio_parent_samples)==0:
+    complete_trio_parent_samples = ['']
 if len(control_samples)==0:
     control_samples = ['']
 control_tm = tm.filter_cols((hl.array(control_samples).contains(tm.id)) &
-                           (~hl.array(parent_samples).contains(tm.id)))
+                           (~hl.array(complete_trio_parent_samples).contains(tm.id)))
 control_tm = control_tm.filter_entries(control_tm.proband_entry.GT.is_non_ref())
 # Output coding only
 if coding_only:
