@@ -419,6 +419,8 @@ td = hl.read_matrix_table(td_mt_uri)
 # inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_entry.GT)) |
 #                   (hl.is_defined(inh_td.mother_entry.GT)) |
 #                   (hl.is_defined(inh_td.father_entry.GT)))>0)
+inh_td = td
+
 # Output coding only
 if coding_only:
     inh_td = inh_td.filter_rows(hl.array(coding_variants).contains(
