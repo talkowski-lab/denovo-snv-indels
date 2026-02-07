@@ -419,7 +419,10 @@ td = hl.read_matrix_table(td_mt_uri)
 # inh_td = inh_td.filter_rows(hl.agg.count_where((hl.is_defined(inh_td.proband_entry.GT)) |
 #                   (hl.is_defined(inh_td.mother_entry.GT)) |
 #                   (hl.is_defined(inh_td.father_entry.GT)))>0)
-inh_td = td
+
+# Filter out all t=0, u=0
+inh_td = td.filter_entries((td.total_t_from_parents==0) & 
+                           (td.total_u_from_parents==0), keep=False)
 
 # Output coding only
 if coding_only:
