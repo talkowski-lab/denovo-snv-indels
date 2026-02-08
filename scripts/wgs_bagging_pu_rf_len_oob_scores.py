@@ -92,7 +92,8 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     if pl_filter:
         ultra_rare = ultra_rare[~ultra_rare.PL_sample.isna()]
         ultra_rare = ultra_rare[~ultra_rare.PL_sample.str.contains('None')]
-        ultra_rare[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = ultra_rare.PL_sample.replace({np.nan: '[0, 0, 0]'}).str.strip('][').str.split(', ', expand=True).astype(int)
+        ultra_rare[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = ultra_rare.PL_sample.replace({np.nan: '[0, 0, 0]'}).str.strip('[]').str.split(r'\s*,\s*', expand=True).astype(int)
+
     ultra_rare['GQ_mean'] = ultra_rare[['GQ_sample', 'GQ_mother', 'GQ_father']].mean(axis=1)
 
     # https://gatk.broadinstitute.org/hc/en-us/articles/360040507131-FilterVcf-Picard-
