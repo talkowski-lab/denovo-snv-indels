@@ -422,7 +422,9 @@ td = hl.read_matrix_table(td_mt_uri)
 
 # Filter out all t=0, u=0
 inh_td = td.filter_entries((td.total_t_from_parents==0) & 
-                           (td.total_u_from_parents==0), keep=False)
+                           (td.total_u_from_parents==0) &
+                           (td.t_indeterminate==0) &
+                           (td.u_indeterminate==0), keep=False)
 
 # Output coding only
 if coding_only:
