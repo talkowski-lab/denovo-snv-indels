@@ -128,10 +128,12 @@ tmp_ped = pd.read_csv(ped_uri, sep='\t')
 if len(tmp_ped.columns) > 6:
     tmp_ped = tmp_ped.iloc[:,:6]
     
-# subset tmp_ped to samples in mt
-samps = mt.s.collect()
+# Get samples in both PED and MT
+samps = mt.s.collect_as_set().intersection(tmp_ped.iloc[:,1])
+
+# Subset PED to these samples
 tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
-tmp_ped = tmp_ped.drop_duplicates(tmp_ped.columns[1])    
+tmp_ped = tmp_ped.drop_duplicates(tmp_ped.columns[1])
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
 ped_uri_processed = f"{prefix}.ped"
@@ -143,6 +145,9 @@ new_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phen
 ped = ped.rename({old: new for old, new in zip(original_cols, new_cols)})
 
 ped = ped.key_by('sample_id')
+
+# Subset MT to these samples
+mt = mt.filter_cols(hl.literal(samps).contains(mt.s))
 
 mt = mt.annotate_cols(reported_sex = ped[mt.s].sex)
 
