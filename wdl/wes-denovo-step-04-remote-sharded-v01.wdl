@@ -1,7 +1,7 @@
 
 version 1.0
 
-import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/eren_dev/wdl/helpers.wdl" as helpers
+import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
 import "wes-prioritize-csq.wdl" as prioritizeCSQ
 import "prioritizeCSQ.wdl" as prioritizeCSQ_og
 
