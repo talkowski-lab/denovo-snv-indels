@@ -44,18 +44,6 @@ workflow filterUltraRareInheritedVariants {
         QcFilters? trio_case_qc_filters
         QcFilters? nontrio_case_qc_filters
 
-        # step2: Hardcoded filters defaults
-        Int min_dp = 7
-        Int max_dp = 1000
-        Int min_gq = 25
-        Int min_pl = 25
-        Int female_min_dp = 10
-        Int male_auto_min_dp = 10
-        Float het_ab_threshold = 0.25
-        Float het_pab_threshold = 0.000000001
-        Float informative_read_threshold = 0.9
-        Float phwe_threshold = 0.000000000001
-
         File ped_sex_qc
         String cohort_prefix
         String bucket_id
