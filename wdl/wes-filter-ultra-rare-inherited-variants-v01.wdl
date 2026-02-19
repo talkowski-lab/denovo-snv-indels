@@ -61,9 +61,9 @@ workflow filterUltraRareInheritedVariants {
         Boolean is_dragen
 
         # step2: Variant QC filters
-        QcFilters control_qc_filters
-        QcFilters trio_case_qc_filters
-        QcFilters nontrio_case_qc_filters
+        QcFilters? control_qc_filters
+        QcFilters? trio_case_qc_filters
+        QcFilters? nontrio_case_qc_filters
 
         File ped_sex_qc
         String cohort_prefix
