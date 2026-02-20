@@ -1038,8 +1038,14 @@ task step2HailBasicFilteringRemote {
             --bucket_id ~{bucket_id} \
             --lcr_uri ~{lcr_uri} \
             ~{if (defined(filter_snv_pass) && filter_snv_pass) then "--filter_snv_pass" else ""} \
-            ~{if (defined(filter_indel_pass) && filter_indel_pass) then "--filter_indel_pass" else ""} \
-            ~{if (defined(exclude_gq_filters) && exclude_gq_filters) then "--exclude_gq_filters" else ""} \
+            ~{
+                if (defined(filter_indel_pass) && filter_indel_pass)
+                then "--filter_indel_pass" else ""
+            } \
+            ~{
+                if (defined(exclude_gq_filters) && exclude_gq_filters)
+                then "--exclude_gq_filters" else ""
+            } \
             ~{if defined(min_dpc) then "--min_dpc ~{min_dpc}" else ""} \
             ~{if defined(max_dpc) then "--max_dpc ~{max_dpc}" else ""} \
             ~{if defined(female_min_dp) then "--female_min_dp ~{female_min_dp}" else ""} \
@@ -1053,13 +1059,19 @@ task step2HailBasicFilteringRemote {
                 else ""
             } \
             ~{if defined(qd_threshold_snv) then "--qd_threshold_snv ~{qd_threshold_snv}" else ""} \
-            ~{if defined(sor_threshold_indel) then "--sor_threshold_indel ~{sor_threshold_indel}" else ""} \
+            ~{
+                if defined(sor_threshold_indel)
+                then "--sor_threshold_indel ~{sor_threshold_indel}" else ""
+            } \
             ~{
                 if defined(readposranksum_threshold_indel)
                 then "--readposranksum_threshold_indel ~{readposranksum_threshold_indel}"
                 else ""
             } \
-            ~{if defined(qd_threshold_indel) then "--qd_threshold_indel ~{qd_threshold_indel}" else ""} \
+            ~{
+                if defined(qd_threshold_indel)
+                then "--qd_threshold_indel ~{qd_threshold_indel}" else ""
+            } \
             ~{if defined(max_homref_ab) then "--max_homref_ab ~{max_homref_ab}" else ""} \
             ~{if defined(min_het_snv_ab) then "--min_het_snv_ab ~{min_het_snv_ab}" else ""} \
             ~{if defined(max_het_snv_ab) then "--max_het_snv_ab ~{max_het_snv_ab}" else ""} \
@@ -1071,13 +1083,11 @@ task step2HailBasicFilteringRemote {
             ~{if defined(min_pl) then "--min_pl ~{min_pl}" else ""} \
             ~{
                 if defined(informative_read_threshold)
-                then "--informative_read_threshold ~{informative_read_threshold}"
-                else ""
+                then "--informative_read_threshold ~{informative_read_threshold}" else ""
             } \
             ~{
                 if defined(call_rate_threshold)
-                then "--call_rate_threshold ~{call_rate_threshold}"
-                else ""
+                then "--call_rate_threshold ~{call_rate_threshold}" else ""
             } \
             ~{if defined(phwe_threshold) then "--phwe_threshold ~{phwe_threshold}" else ""}
     >>>
@@ -1085,7 +1095,7 @@ task step2HailBasicFilteringRemote {
     String prefix = basename(annot_mt, "_wes_denovo_annot.mt")
     output {
         String filtered_mt = read_lines("mt_uri.txt")[0]
-        File post_filter_sample_qc_info = "~{prefix}_wes_final_annot_post_filter_qc_info.txt"
+        File post_filter_sample_qc_info = "~{prefix}_final_annot_post_filter_qc_info.txt"
     }
 }
 

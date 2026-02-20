@@ -309,11 +309,11 @@ def main(args):
 
     # get sample-level stats to plot
     hl.sample_qc(mt).cols().flatten().export(
-        f"{prefix}_wes_final_annot_post_filter_qc_info.txt"
+        f"{prefix}_final_annot_post_filter_qc_info.txt"
     )
 
     # export mt
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_denovo_basic_filtering.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_basic_filtering.mt"
     pd.Series([filename]).to_csv("mt_uri.txt", index=False, header=None)
     mt.write(filename, overwrite=True)
 
