@@ -53,7 +53,7 @@ workflow filterUltraRareInheritedVariants {
         
         # step2
         File lcr_uri
-        String hail_basic_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_wgs_basic_filtering.py"
+        String hail_basic_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_wgs_basic_filtering.py"
         Float call_rate_threshold=0.8
         
         # To help set variant QC filter defaults
