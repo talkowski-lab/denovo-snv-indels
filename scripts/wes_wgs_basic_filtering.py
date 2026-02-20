@@ -351,7 +351,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_het_snv_ab", type=float, required=True)
     parser.add_argument("--min_het_indel_ab", type=float, required=True)
     parser.add_argument("--max_het_indel_ab", type=float, required=True)
-    parser.add_argument("--max_het_indel_ab", type=float, required=True)
+    parser.add_argument("--min_het_indel_ab", type=float, required=True)
     parser.add_argument("--het_pab_threshold", type=float, required=True)
     parser.add_argument("--min_mean_gq", type=float)
     parser.add_argument("--min_gq", type=int)
