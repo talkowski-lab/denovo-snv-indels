@@ -944,11 +944,11 @@ task subsetTrioCaseControlPed {
         awk -F'\t' '(NR == 1) || ($6 == 1)' ~{ped} > ~{cohort_prefix}.controls.ped
 
         awk -F'\t' 'NR == FNR {nas[$1]; next} (FNR == 1) || (($6 == 2) && (($3 in nas) || ($4 in nas)))'
-            <(echo -e ~{sep='\n' na_vals}) ~{ped}
+            <(echo -e "~{sep='\\n' na_vals}") ~{ped}
             > ~{cohort_prefix}.nontrio_cases.ped
 
         awk -F'\t' 'NR == FNR {nas[$1]; next} (FNR == 1) || (($6 == 2) && !($3 in nas) && !($4 in nas))'
-            <(echo -e ~{sep='\n' na_vals}) ~{ped}
+            <(echo -e "~{sep='\\n' na_vals}") ~{ped}
             > ~{cohort_prefix}.trio_cases.ped
     >>>
 
