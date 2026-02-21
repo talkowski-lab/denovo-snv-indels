@@ -132,7 +132,7 @@ def main(args):
     if len(tmp_ped.columns) > 6:
         tmp_ped = tmp_ped.iloc[:, :6]
     # Get samples in both PED and MT
-    samps = mt.s.collect_as_set().intersection(tmp_ped.iloc[:, 1])
+    samps = set(mt.s.collect()).intersection(set(tmp_ped.iloc[:, 1]))
     # Subset MT to these samples
     mt = mt.filter_cols(hl.literal(samps).contains(mt.s))
     # Subset PED to these samples
