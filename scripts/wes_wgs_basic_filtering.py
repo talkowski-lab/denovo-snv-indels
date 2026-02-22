@@ -121,7 +121,10 @@ def main(args):
     )
 
     bucket_id = args.bucket_id
-    prefix = os.path.basename(args.annot_mt).split("_wes_denovo_annot.mt")[0]
+    prefix = (
+        f"{os.path.basename(args.annot_mt).split('_wes_denovo_annot.mt')[0]}"
+        f"{f'.{args.suffix}' if args.suffix is not None else ''}"
+    )
 
     # Read in MT
     mt = hl.read_matrix_table(args.annot_mt)
@@ -327,6 +330,7 @@ if __name__ == "__main__":
     parser.add_argument("--cores", default="8")
     parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
     parser.add_argument("--bucket_id", required=True)
+    parser.add_argument("--suffix", help="Appended with separator to output filename")
     parser.add_argument("--lcr_uri", required=True)
     parser.add_argument("--genome_build", default="GRCh38")
 
