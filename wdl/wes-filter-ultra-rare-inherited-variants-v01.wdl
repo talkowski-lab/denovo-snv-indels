@@ -765,8 +765,8 @@ workflow filterUltraRareInheritedVariants {
                 ),
                 bucket_id=bucket_id,
                 merged_filename=(
-                    basename(step2Controls.filtered_mt, "_controls_basic_filtering.mt") +
-                    '.merged'
+                    basename(step1.annot_mt, "_wes_denovo_annot.mt") +
+                    '.basic_filtering.merged'
                 ),
                 join_outer=true,
                 hail_docker=hail_docker
