@@ -763,9 +763,11 @@ workflow filterUltraRareInheritedVariants {
                         step2NontrioCases.filtered_mt
                     ]
                 ),
-                # cohort_prefix=cohort_prefix,
                 bucket_id=bucket_id,
-                merged_filename=cohort_prefix + '.merged',
+                merged_filename=(
+                    basename(step2Controls.filtered_mt, "_controls_basic_filtering.mt") +
+                    '.merged'
+                ),
                 join_outer=true,
                 hail_docker=hail_docker
         }
