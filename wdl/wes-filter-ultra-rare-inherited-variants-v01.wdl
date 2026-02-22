@@ -958,7 +958,7 @@ task step2HailBasicFilteringRemote {
             --cores ~{cpu_cores} \
             --mem ~{memory} \
             --bucket_id ~{bucket_id} \
-            ~{if defined(suffix) then "--suffix" else ""} \
+            ~{if defined(suffix) then "--suffix ~{suffix}" else ""} \
             --lcr_uri ~{lcr_uri} \
             ~{if (defined(filter_snv_pass) && filter_snv_pass) then "--filter_snv_pass" else ""} \
             ~{
