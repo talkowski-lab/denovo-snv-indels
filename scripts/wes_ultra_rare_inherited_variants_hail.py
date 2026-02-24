@@ -544,17 +544,13 @@ if affected_af_threshold is not None:
     conditions.append(base_mt.affected_AF <= affected_af_threshold)
 
 if conditions:
-    case_filtered_mt = base_mt.filter_rows(hl.any(lambda x: x, conditions))
+    ultra_rare_mt = base_mt.filter_rows(hl.any(lambda x: x, conditions))
 else:
     # Fallback to standard cohort filters if no affected filters defined
-    case_filtered_mt = apply_cohort_ac_af_filters(
+    # TODO: Correct calculation of cohort AC/AF
+    ultra_rare_mt = apply_cohort_ac_af_filters(
         base_mt, cohort_ac_threshold, cohort_af_threshold
     )
-
-# Apply cohort AC, AF filters
-ultra_rare_mt = apply_cohort_ac_af_filters(
-    base_mt, cohort_ac_threshold, cohort_af_threshold
-)
 
 ultra_rare_filt_mt_uri = f"{prefix}.ultra.rare.mt"
 ultra_rare_mt = ultra_rare_mt.checkpoint(ultra_rare_filt_mt_uri, overwrite=True)
@@ -574,7 +570,7 @@ if len(complete_trio_samples) == 0:
     complete_trio_samples = [""]
 trio_pedigree = pedigree.filter_to(complete_trio_samples)
 
-td = hl.trio_matrix(case_filtered_mt, trio_pedigree, complete_trios=True)
+td = hl.trio_matrix(ultra_rare_mt, trio_pedigree, complete_trios=True)
 
 td = parent_aware_t_u_annotations_v4(td)
 
@@ -584,9 +580,7 @@ td = td.annotate_entries(
 )
 
 # Original function for site-level
-tdt_table_filtered = hl.transmission_disequilibrium_test(
-    case_filtered_mt, trio_pedigree
-)
+tdt_table_filtered = hl.transmission_disequilibrium_test(ultra_rare_mt, trio_pedigree)
 
 td = td.annotate_rows(tdt=tdt_table_filtered[td.row_key])
 
@@ -643,8 +637,8 @@ non_trio_cases = ped_ht.filter(
 ).sample_id.collect()
 if len(non_trio_cases) == 0:
     non_trio_cases = [""]
-non_trio_cases_mt = case_filtered_mt.filter_cols(
-    hl.array(non_trio_cases).contains(case_filtered_mt.s)
+non_trio_cases_mt = ultra_rare_mt.filter_cols(
+    hl.array(non_trio_cases).contains(ultra_rare_mt.s)
 )
 non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
 # Output coding only
