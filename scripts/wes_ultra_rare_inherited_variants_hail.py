@@ -340,6 +340,7 @@ filt_mt=filt_mt.annotate_rows(vep=hl.Struct(transcript_consequences = transcript
 filt_mt = filter_vep_to_canonical_transcripts(filt_mt)
 filt_mt = process_consequences(filt_mt)
 filt_mt = filt_mt.annotate_rows(worst_csq=filt_mt.vep.worst_csq)
+filt_mt = filt_mt.drop('vep')
 
 # GnomAD AF filter
 gnomad_af_fill_missing = hl.if_else(hl.is_defined(filt_mt.gnomad_non_neuro_AF), filt_mt.gnomad_non_neuro_AF, 0)
