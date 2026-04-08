@@ -78,6 +78,8 @@ workflow step1 {
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     hail_docker=hail_docker,
                     qual_threshold=qual_threshold,
+                    sample_dp_min=sample_dp_min,
+                    sample_dp_max=sample_dp_max,
                     sor_threshold_indel=sor_threshold_indel,
                     sor_threshold_snv=sor_threshold_snv,
                     readposranksum_threshold_indel=readposranksum_threshold_indel,
