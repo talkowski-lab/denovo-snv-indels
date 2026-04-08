@@ -17,24 +17,76 @@ import sys
 import numpy as np 
 import ast
 
+import argparse
+import numpy as np
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+parser = argparse.ArgumentParser(description="Preprocess VCF with filtering thresholds")
+
+# Required file/string inputs
+parser.add_argument("--lcr_uri", required=True)
+parser.add_argument("--ped_uri", required=True)
+parser.add_argument("--meta_uri", required=True)
+parser.add_argument("--trio_uri", required=True)
+parser.add_argument("--vcf_uri", required=True)
+
+# Booleans
+parser.add_argument("--filter_pass", type=str2bool, required=True)
+parser.add_argument("--exclude_gq_filters", type=str2bool, required=True)
+
+# Thresholds
+parser.add_argument("--qual_threshold", type=int, required=True)
+parser.add_argument("--sample_dp_min", type=int, required=True)   # ✅ added
+parser.add_argument("--sample_dp_max", type=int, required=True)   # ✅ added
+
+parser.add_argument("--sor_threshold_indel", type=float, required=True)
+parser.add_argument("--sor_threshold_snv", type=float, required=True)
+parser.add_argument("--readposranksum_threshold_indel", type=float, required=True)
+parser.add_argument("--readposranksum_threshold_snv", type=float, required=True)
+parser.add_argument("--qd_threshold_indel", type=float, required=True)
+parser.add_argument("--qd_threshold_snv", type=float, required=True)
+parser.add_argument("--mq_threshold", type=float, required=True)
+
+# Runtime
+parser.add_argument("--cores", required=True)  # keep as string if needed
+parser.add_argument("--memory", type=float, required=True)
+
+args = parser.parse_args()
+
+# Assign variables 
 build = "GRCh38"
-lcr_uri = sys.argv[1]
-ped_uri = sys.argv[2]
-meta_uri = sys.argv[3]
-trio_uri = sys.argv[4]
-vcf_uri = sys.argv[5]
-filter_pass = ast.literal_eval(sys.argv[6].capitalize())  # DRAGEN VCFs...
-exclude_gq_filters = ast.literal_eval(sys.argv[7].capitalize())  # DRAGEN VCFs...
-qual_threshold = int(sys.argv[8])  # also for DRAGEN VCFs...
-sor_threshold_indel = float(sys.argv[9])
-sor_threshold_snv = float(sys.argv[10])
-readposranksum_threshold_indel = float(sys.argv[11])
-readposranksum_threshold_snv = float(sys.argv[12])
-qd_threshold_indel = float(sys.argv[13])
-qd_threshold_snv = float(sys.argv[14])
-mq_threshold = float(sys.argv[15])
-cores = sys.argv[16]  # string
-mem = int(np.floor(float(sys.argv[17])))
+lcr_uri = args.lcr_uri
+ped_uri = args.ped_uri
+meta_uri = args.meta_uri
+trio_uri = args.trio_uri
+vcf_uri = args.vcf_uri
+
+filter_pass = args.filter_pass
+exclude_gq_filters = args.exclude_gq_filters
+qual_threshold = args.qual_threshold
+
+sample_dp_min = args.sample_dp_min
+sample_dp_max = args.sample_dp_max
+
+sor_threshold_indel = args.sor_threshold_indel
+sor_threshold_snv = args.sor_threshold_snv
+readposranksum_threshold_indel = args.readposranksum_threshold_indel
+readposranksum_threshold_snv = args.readposranksum_threshold_snv
+qd_threshold_indel = args.qd_threshold_indel
+qd_threshold_snv = args.qd_threshold_snv
+mq_threshold = args.mq_threshold
+
+cores = args.cores
+mem = int(np.floor(args.memory))
 
 prefix = os.path.basename(vcf_uri).split('.vcf')[0]
 
@@ -157,7 +209,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
         mt = mt.filter_rows((hl.is_snp(mt.alleles[0], mt.alleles[1]) &(mt.filters.size() == 0))
                         | hl.is_indel(mt.alleles[0], mt.alleles[1]))
     # filter on depth
-    mt = mt.filter_entries( (mt.DPC < 10) | (mt.DPC > 200), keep = False) 
+    mt = mt.filter_entries( (mt.DPC < sample_dp_min) | (mt.DPC > sample_dp_max), keep = False) 
     # row (variant INFO) level filters - GATK recommendations for short variants
     dn_snv_cond_row = (hl.is_snp(mt.alleles[0], mt.alleles[1])
                         & (mt.qual >= qual_threshold)

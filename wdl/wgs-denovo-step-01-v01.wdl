@@ -24,6 +24,8 @@ workflow step1 {
         String cohort_prefix
         Int shards_per_chunk=10
         Int qual_threshold=150  # ~30 for DRAGEN
+        Int sample_dp_min=10
+        Int sample_dp_max=200
         Float sor_threshold_indel=3.0
         Float sor_threshold_snv=2.5
         Float readposranksum_threshold_indel=-1.7
@@ -110,6 +112,8 @@ workflow step1 {
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     hail_docker=hail_docker,
                     qual_threshold=qual_threshold,
+                    sample_dp_min=sample_dp_min,
+                    sample_dp_max=sample_dp_max,
                     sor_threshold_indel=sor_threshold_indel,
                     sor_threshold_snv=sor_threshold_snv,
                     readposranksum_threshold_indel=readposranksum_threshold_indel,
@@ -173,6 +177,8 @@ task preprocessVCF {
         File trio_uri
         String hail_docker
         Int qual_threshold
+        Int sample_dp_min
+        Int sample_dp_max
         Float sor_threshold_indel
         Float sor_threshold_snv
         Float readposranksum_threshold_indel
@@ -217,10 +223,26 @@ task preprocessVCF {
     command <<<
         set -eou pipefail
         curl ~{python_preprocess_script} > python_preprocess_script.py
-        python3 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} \
-        ~{filter_pass} ~{exclude_gq_filters} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
-        ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
-        ~{mq_threshold} ~{cpu_cores} ~{memory}
+        python3 python_preprocess_script.py \
+        --lcr-uri ~{lcr_uri} \
+        --ped-uri ~{ped_sex_qc} \
+        --meta-uri ~{meta_uri} \
+        --trio-uri ~{trio_uri} \
+        --vcf-uri ~{vcf_uri} \
+        --filter-pass ~{filter_pass} \
+        --exclude-gq-filters ~{exclude_gq_filters} \
+        --qual-threshold ~{qual_threshold} \
+        --sample-dp-min ~{sample_dp_min} \
+        --sample-dp-max ~{sample_dp_max} \
+        --sor-threshold-indel ~{sor_threshold_indel} \
+        --sor-threshold-snv ~{sor_threshold_snv} \
+        --readposranksum-threshold-indel ~{readposranksum_threshold_indel} \
+        --readposranksum-threshold-snv ~{readposranksum_threshold_snv} \
+        --qd-threshold-indel ~{qd_threshold_indel} \
+        --qd-threshold-snv ~{qd_threshold_snv} \
+        --mq-threshold ~{mq_threshold} \
+        --cores ~{cpu_cores} \
+        --memory ~{memory}
     >>>
 
     output {
