@@ -435,7 +435,7 @@ workflow filterUltraRareInheritedVariants {
                     ]
                 ),
                 # cohort_prefix=cohort_prefix,
-                # bucket_id='test',
+                bucket_id=bucket_id,
                 merged_filename=cohort_prefix + '.merged',
                 join_outer=true,
                 hail_docker=hail_docker
