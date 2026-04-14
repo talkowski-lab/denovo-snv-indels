@@ -117,7 +117,7 @@ workflow filterUltraRareInheritedVariants {
                 filtered_mt=step2.filtered_mt,
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                vep_vcf_file=select_first([vcf_file, vep_vcf_file_override]),  # Fixed reference to current scattered file
+                vep_vcf_file=select_first([vep_vcf_file_override, vcf_file]),  # Fixed reference to current scattered file
                 cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
