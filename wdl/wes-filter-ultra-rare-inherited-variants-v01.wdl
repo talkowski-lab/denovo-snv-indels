@@ -112,6 +112,7 @@ workflow filterUltraRareInheritedVariants {
             call_rate_threshold: 0.8
         }
     }
+    # Define default QC filters for genome cohorts split by DRAGEN vs. non-DRAGEN
     if (is_genome) {
         # Define default QC filters for DRAGEN genome cohorts
         # NOTE: After these relaxed filters, Eren applied hard filters after in a notebook
@@ -172,6 +173,8 @@ workflow filterUltraRareInheritedVariants {
         }
     }
 
+    # Set default QC filters based on whether cohort is exome, DRAGEN genome,
+    # or non-DRAGEN genome
     QcFilters qc_filters_default = select_first(
         [
             qc_filters_exome_default,
@@ -605,12 +608,14 @@ workflow filterUltraRareInheritedVariants {
             hail_docker=hail_docker
     }
 
+    # Apply filters to each input VCF file
     scatter (vcf_file in vep_vcf_files) {
         call helpers.getHailMTSize as getInputMTSize {
             input:
                 mt_uri=vcf_file,
                 hail_docker=hail_docker
         }
+        # Annotate VCF and save as MT
         call step1.hailAnnotateRemote as step1 {
             input:
                 mt_uri=vcf_file,
@@ -631,7 +636,7 @@ workflow filterUltraRareInheritedVariants {
                 hail_docker=hail_docker
         }
 
-        # Split MTs by controls, trio cases, non-trio cases to apply separate filters
+        # Split MT by controls, trio cases, non-trio cases to apply separate filters
         if (length(read_lines(subsetTrioCaseControlPed.controls_ped)) > 1) {
             call step2HailBasicFilteringRemote as step2Controls {
                 input:
@@ -758,7 +763,7 @@ workflow filterUltraRareInheritedVariants {
             }
         }
 
-        # Merge all MTs together before running inherited filtering
+        # Merge all MTs together before running transmitted/untransmitted, case-control filtering
         call helpers.mergeMTs as mergeStep2SubsetMTs {
             input: 
                 mt_uris=select_all(
@@ -801,6 +806,7 @@ workflow filterUltraRareInheritedVariants {
         }
     }
 
+    # Merge transmitted/untransmitted, case-control filtering results from all input VCFs
     call helpers.mergeResultsPython as mergeUltraRareInherited {
         input:
             tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_inherited_tsv,
@@ -808,7 +814,6 @@ workflow filterUltraRareInheritedVariants {
             input_size=size(hailUltraRareInheritedFilteringRemote.ultra_rare_inherited_tsv, 'GB'),
             merged_filename=cohort_prefix+'.ultra.rare.inherited.tsv.gz'
     }
-
     call helpers.mergeResultsPython as mergeUltraRareNonTrioCases {
         input:
             tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_non_trio_cases_tsv,
@@ -816,7 +821,6 @@ workflow filterUltraRareInheritedVariants {
             input_size=size(hailUltraRareInheritedFilteringRemote.ultra_rare_non_trio_cases_tsv, 'GB'),
             merged_filename=cohort_prefix+'.ultra.rare.non.trio.cases.tsv.gz'
     }
-
     call helpers.mergeResultsPython as mergeUltraRareControls {
         input:
             tsvs=hailUltraRareInheritedFilteringRemote.ultra_rare_controls_tsv,
