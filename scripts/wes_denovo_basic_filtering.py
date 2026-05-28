@@ -23,7 +23,7 @@ parser.add_argument("--cores", default="8")
 parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
 parser.add_argument("--bucket_id", required=True)
 parser.add_argument("--lcr_uri", required=True)
-parser.add_argument("--call_rate_threshold", type=float, default=0.95)
+parser.add_argument("--call_rate_threshold", type=float, default=0.8)
 parser.add_argument("--genome_build", default="GRCh38")
 
 # Parameters for hardcoded filters
@@ -129,7 +129,7 @@ if len(tmp_ped.columns) > 6:
     tmp_ped = tmp_ped.iloc[:,:6]
     
 # Get samples in both PED and MT
-samps = mt.s.collect_as_set().intersection(tmp_ped.iloc[:,1])
+samps = set(mt.s.collect()).intersection(tmp_ped.iloc[:,1])
 
 # Subset PED to these samples
 tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
