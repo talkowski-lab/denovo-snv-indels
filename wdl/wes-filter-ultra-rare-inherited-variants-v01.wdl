@@ -49,7 +49,7 @@ workflow filterUltraRareInheritedVariants {
         Array[File] vep_vcf_files
         String mpc_ht_uri
         String gnomad_ht_uri
-        String hail_annotation_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_denovo_annotation.py"
+        String hail_annotation_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_denovo_annotation.py"
         
         # step2
         File lcr_uri
@@ -69,7 +69,7 @@ workflow filterUltraRareInheritedVariants {
         String cohort_prefix
         String bucket_id
         String hail_docker
-        String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_ultra_rare_inherited_variants_hail.py"
+        String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_ultra_rare_inherited_variants_hail.py"
 
         String genome_build='GRCh38'
         Float gnomad_non_neuro_af_threshold=0.001
