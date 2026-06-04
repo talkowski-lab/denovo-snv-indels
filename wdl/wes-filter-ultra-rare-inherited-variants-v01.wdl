@@ -167,7 +167,7 @@ workflow filterUltraRareInheritedVariants {
                 max_het_snv_ab: 0.78,
                 min_het_indel_ab: 0.20,
                 max_het_indel_ab: 0.80,
-                min_mean_gq: 50,
+                # min_mean_gq: 50,
                 min_gq: 99
             }
         }
