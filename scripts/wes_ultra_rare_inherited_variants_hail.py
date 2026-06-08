@@ -49,9 +49,9 @@ def parse_args():
     add("--keep-cols", nargs="+", default=None, help="Columns to keep when using --simple")    
     add("--mem", type=float, default=4)
 
-    parser = p.parse_args
+    parser = p.parse_args()
 
-    if args.simple and args.keep_cols is None:
+    if parser.simple and parser.keep_cols is None:
         parser.error("--keep-cols is required when using --simple")
 
     return parser
