@@ -455,7 +455,8 @@ inh_td_uri = f"{prefix}.ultra.rare.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_uri, overwrite=True)
 inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
 if simplify_output:
-    inh_td.entries().flatten().select(*keep_cols).export(inh_output_uri)
+    inh_keep_cols = [c for c in keep_cols if c in inh_td.entries().flatten().row]
+    inh_td.entries().flatten().select(*inh_keep_cols).export(inh_output_uri)
 else:
     inh_td.entries().flatten().export(inh_output_uri)
 
@@ -490,6 +491,7 @@ control_tm_uri = f"{prefix}.ultra.rare.controls.mt"
 control_tm = control_tm.checkpoint(control_tm_uri, overwrite=True)
 control_output_uri = f"{prefix}.ultra.rare.controls.tsv.gz"
 if simplify_output:
-    control_tm.entries().flatten().select(*keep_cols).export(control_output_uri)
+    control_keep_cols = [c for c in keep_cols if c in control_tm.entries().flatten().row]
+    control_tm.entries().flatten().select(*control_keep_cols).export(control_output_uri)
 else:
     control_tm.entries().flatten().export(control_output_uri)
