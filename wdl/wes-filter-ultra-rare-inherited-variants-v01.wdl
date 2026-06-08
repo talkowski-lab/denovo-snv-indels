@@ -71,7 +71,7 @@ workflow filterUltraRareInheritedVariants {
         Boolean coding_only=true
         Boolean simplify_output=false
         Array[String] keep_cols=[
-            "locus", "alleles", "proband.s", "mother.s", "father.s", "fam_id", "proband_entry.GT", "mother_entry.GT", "father_entry.GT",
+            "locus", "alleles", "id", "proband.s", "mother.s", "father.s", "fam_id", "proband_entry.GT", "mother_entry.GT", "father_entry.GT",
             "t_from_dad", "t_from_mom", "u_from_dad", "u_from_mom", "t_indeterminate", "u_indeterminate", "tdt.chi_sq", "tdt.p_value",
             "total_t_from_parents", "total_u_from_parents", "worst_csq.SYMBOL", "worst_csq.Consequence", "worst_csq.most_severe_consequence", "worst_csq.gnomADg_AF", "info.PREDICTED_NONCODING", "isCoding"
         ]
