@@ -472,10 +472,7 @@ non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non
 non_trio_cases_mt_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
 non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrite=True)
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
-if simplify_output:
-    non_trio_cases_mt.entries().flatten().select(*keep_cols).export(non_trio_cases_output_uri)
-else:
-    non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
+non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 
 # Control/unaffected samples that aren't parents in complete trios
 all_parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
