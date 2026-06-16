@@ -368,11 +368,11 @@ if coding_only:
 
 # GnomAD AF filter
 # Flexible input (exome or genome AFs)
-expr = filt_mt.row
+gnomad_expr = filt_mt.row
 for sub_field in gnomad_af_field.split('.'):
-    expr = expr[sub_field]
-
-gnomad_af_fill_missing = hl.if_else(hl.is_defined(expr), expr, 0)
+    gnomad_expr = gnomad_expr[sub_field]
+gnomad_expr = hl.float(gnomad_expr)
+gnomad_af_fill_missing = hl.if_else(hl.is_defined(gnomad_expr), gnomad_expr, 0)
 base_mt = filt_mt.filter_rows(gnomad_af_fill_missing > gnomad_af_threshold, keep=False)
 
 ped_ht = hl.import_table(ped_uri, delimiter='\t',
