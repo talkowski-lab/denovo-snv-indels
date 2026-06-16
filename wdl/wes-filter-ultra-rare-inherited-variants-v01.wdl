@@ -63,7 +63,8 @@ workflow filterUltraRareInheritedVariants {
         String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_ultra_rare_inherited_variants_hail.py"
 
         String genome_build='GRCh38'
-        Float gnomad_non_neuro_af_threshold=0.001
+        String gnomad_af_field='gnomad_non_neuro_AF'
+        Float gnomad_af_threshold=0.001
         Float cohort_af_threshold=0.001
         Int cohort_ac_threshold=20
         Int? affected_ac_threshold
@@ -475,7 +476,8 @@ workflow filterUltraRareInheritedVariants {
                 cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
-                gnomad_non_neuro_af_threshold=gnomad_non_neuro_af_threshold,
+                gnomad_af_field=gnomad_af_field,
+                gnomad_af_threshold=gnomad_af_threshold,
                 cohort_ac_threshold=cohort_ac_threshold,
                 cohort_af_threshold=cohort_af_threshold,
                 affected_ac_threshold=affected_ac_threshold,
@@ -528,7 +530,8 @@ task hailUltraRareInheritedFilteringRemote {
         String cohort_prefix
         String hail_ultra_rare_inherited_filtering_script
         String hail_docker
-        Float gnomad_non_neuro_af_threshold
+        String gnomad_af_field
+        Float gnomad_af_threshold
         Int cohort_ac_threshold
         Float cohort_af_threshold
         Int? affected_ac_threshold
@@ -572,7 +575,8 @@ task hailUltraRareInheritedFilteringRemote {
             --ped-uri ~{ped_sex_qc} \
             --filt-mt-uri ~{filtered_mt} \
             --vep-vcf-uri ~{vep_vcf_file} \
-            --gnomad-non-neuro-af-threshold ~{gnomad_non_neuro_af_threshold} \
+            --gnomad-af-field ~{gnomad_af_field} \
+            --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-ac-threshold ~{cohort_ac_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
             ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
