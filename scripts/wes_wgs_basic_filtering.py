@@ -270,6 +270,7 @@ def main(args):
     if args.min_mean_gq is not None and not args.exclude_gq_filters:
         mt = hl.variant_qc(mt)
         mt = mt.filter_rows(mt.variant_qc.gq_stats.mean >= args.min_mean_gq, keep=True)
+        mt = mt.drop("variant_qc")
 
     # WGS (should also be applied to WES, co-opts a WES HomRef GQ filter): GQ filters
     if args.min_gq is not None and not args.exclude_gq_filters:
