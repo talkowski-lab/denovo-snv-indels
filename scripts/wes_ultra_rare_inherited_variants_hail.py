@@ -534,7 +534,7 @@ base_mt = filt_mt.filter_rows(
 )
 
 ped_ht = hl.import_table(
-    ped_uri, delimiter="\t", types={"phenotype": hl.tfloat, "sex": hl.tfloat}
+    ped_uri, delimiter="\t", types={"phenotype": hl.tint, "sex": hl.tint}
 ).key_by("sample_id")
 base_mt = annotate_affected_unaffected_AC(base_mt, ped_ht)
 
@@ -558,9 +558,8 @@ ultra_rare_filt_mt_uri = f"{prefix}.ultra.rare.mt"
 ultra_rare_mt = ultra_rare_mt.checkpoint(ultra_rare_filt_mt_uri, overwrite=True)
 
 # Pedigree
-ped_df = pd.read_csv(ped_uri, sep="\t")
 cropped_ped_uri = f"{ped_uri.split('.ped')[0]}_cropped.ped"
-ped_df.iloc[:, :6].to_csv(cropped_ped_uri, index=False, sep="\t")
+ped_ht.key_by().select(*ped_ht.row[:6]).export(cropped_ped_uri, header=False)
 
 pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter="\t")
 complete_trio_samples = (
