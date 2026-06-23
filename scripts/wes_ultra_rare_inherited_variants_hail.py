@@ -306,31 +306,30 @@ def apply_cohort_ac_af_filters(mt, cohort_ac_threshold, cohort_af_threshold):
 def apply_affected_ac_filter(mt, affected_ac_threshold):
     return mt.filter_rows(mt.affected_AC <= affected_ac_threshold)
 
+
 def annotate_affected_unaffected_AC(mt, ped_ht):
-    # Annotate phenotype in MT
+    # 1. Annotate phenotype onto columns safely
     mt = mt.annotate_cols(phenotype=ped_ht[mt.s].phenotype)
     
-    # Pre-calculate counts of individuals to determine AN
-    n_unaffected = ped_ht.filter(ped_ht.phenotype == 1).count()
-    n_affected = ped_ht.filter(ped_ht.phenotype == 2).count()
-
-    # Get cohort unaffected/affected het and homvar counts
-    mt = mt.annotate_rows(**{
-        "n_het_unaffected": hl.agg.filter(mt.phenotype==1, hl.agg.sum(mt.GT.is_het())),
-        "n_hom_var_unaffected": hl.agg.filter(mt.phenotype==1, hl.agg.sum(mt.GT.is_hom_var())),
-        "n_het_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_het())),
-        "n_hom_var_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_hom_var()))
-    })
-    
+    # 2. Compute counts, AC, and AN dynamically per row
     mt = mt.annotate_rows(
-        unaffected_AC = mt.n_het_unaffected + 2*mt.n_hom_var_unaffected,
-        affected_AC = mt.n_het_affected + 2*mt.n_hom_var_affected
+        # Unaffected counts
+        n_het_unaffected = hl.agg.count_where((mt.phenotype == 1) & mt.GT.is_het()),
+        n_hom_var_unaffected = hl.agg.count_where((mt.phenotype == 1) & mt.GT.is_hom_var()),
+        unaffected_AC = hl.agg.sum(hl.if_else(mt.phenotype == 1, mt.GT.n_alt_alleles(), 0)),
+        unaffected_AN = hl.agg.sum(hl.if_else(mt.phenotype == 1, mt.GT.ploidy, 0)),
+        
+        # Affected counts
+        n_het_affected = hl.agg.count_where((mt.phenotype == 2) & mt.GT.is_het()),
+        n_hom_var_affected = hl.agg.count_where((mt.phenotype == 2) & mt.GT.is_hom_var()),
+        affected_AC = hl.agg.sum(hl.if_else(mt.phenotype == 2, mt.GT.n_alt_alleles(), 0)),
+        affected_AN = hl.agg.sum(hl.if_else(mt.phenotype == 2, mt.GT.ploidy, 0))
     )
 
-    # Calculate AF, handling division by zero if a group is empty
+    # 3. Calculate AF using the dynamic row-level AN
     mt = mt.annotate_rows(
-        unaffected_AF = hl.if_else(n_unaffected > 0, mt.unaffected_AC / (2 * n_unaffected), 0.0),
-        affected_AF = hl.if_else(n_affected > 0, mt.affected_AC / (2 * n_affected), 0.0)
+        unaffected_AF = hl.if_else(mt.unaffected_AN > 0, mt.unaffected_AC / mt.unaffected_AN, 0.0),
+        affected_AF = hl.if_else(mt.affected_AN > 0, mt.affected_AC / mt.affected_AN, 0.0)
     )
 
     return mt
