@@ -160,8 +160,8 @@ def kyles_de_novo_v16(mt: MatrixTable,
     else:
         # Note that this now requires prior annotation with AC and AN values
         # (did this August 2022 to correct for hemizygous situations)
-        n_alt_alleles = mt.AC
-        total_alleles = mt.AN
+        n_alt_alleles = mt.sex_aware_AC
+        total_alleles = mt.sex_aware_AN
         # subtract 1 from __alt_alleles to correct for the observed genotype
         mt = mt.annotate_rows(__prior=pop_frequency_prior,
                               __alt_alleles=n_alt_alleles,

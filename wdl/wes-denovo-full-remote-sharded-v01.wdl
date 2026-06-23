@@ -43,6 +43,18 @@ workflow hailDenovoWES {
         String sv_base_mini_docker
         String hail_docker
 
+        # Step2 hardcoded filters defaults
+        Int min_dp = 7
+        Int max_dp = 1000
+        Int min_gq = 25
+        Int min_pl = 25
+        Int female_min_dp = 10
+        Int male_auto_min_dp = 10
+        Float het_ab_threshold = 0.25
+        Float het_pab_threshold = 0.000000001
+        Float informative_read_threshold = 0.9
+        Float phwe_threshold = 0.000000000001
+
         Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
@@ -53,6 +65,7 @@ workflow hailDenovoWES {
         Float af_threshold=0.005
         Float call_rate_threshold=0.8
         Boolean single_variant=true
+
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_prioritize
     }
@@ -82,6 +95,7 @@ workflow hailDenovoWES {
                 mt_uri=step1.annot_mt,
                 hail_docker=hail_docker
         }
+
         call step2.hailBasicFilteringRemote as step2 {
             input:
                 lcr_uri=lcr_uri,
@@ -92,6 +106,16 @@ workflow hailDenovoWES {
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
                 call_rate_threshold=call_rate_threshold,
+                min_dp=min_dp,
+                max_dp=max_dp,
+                min_gq=min_gq,
+                min_pl=min_pl,
+                female_min_dp=female_min_dp,
+                male_auto_min_dp=male_auto_min_dp,
+                het_ab_threshold=het_ab_threshold,
+                het_pab_threshold=het_pab_threshold,
+                informative_read_threshold=informative_read_threshold,
+                phwe_threshold=phwe_threshold,
                 genome_build=genome_build,
                 hail_docker=hail_docker
         }

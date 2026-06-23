@@ -70,6 +70,7 @@ workflow filterUltraRareInheritedVariants {
         String hail_docker
         String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_ultra_rare_inherited_variants_hail.py"
 
+        File? vep_vcf_file_override  # if vep_vcf_files input is MTs
         String genome_build='GRCh38'
         Float gnomad_non_neuro_af_threshold=0.001
         Float cohort_af_threshold=0.001
@@ -609,7 +610,7 @@ workflow filterUltraRareInheritedVariants {
 
     # Apply filters to each input VCF file
     scatter (vcf_file in vep_vcf_files) {
-        call helpers.getHailMTSize as getInputMTSize {
+        call helpers.getHailMTSize as getStepInputMTSize {
             input:
                 mt_uri=vcf_file,
                 hail_docker=hail_docker
@@ -618,7 +619,7 @@ workflow filterUltraRareInheritedVariants {
         call step1.hailAnnotateRemote as step1 {
             input:
                 mt_uri=vcf_file,
-                input_size=getInputMTSize.mt_size,
+                input_size=getStepInputMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
@@ -792,7 +793,7 @@ workflow filterUltraRareInheritedVariants {
                 filtered_mt=mergeStep2SubsetMTs.merged_mt,
                 input_size=getStep2MergedMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                vep_vcf_file=vcf_file,  # Fixed reference to current scattered file
+                vep_vcf_file=select_first([vep_vcf_file_override, vcf_file]),  # Fixed reference to current scattered file
                 cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
