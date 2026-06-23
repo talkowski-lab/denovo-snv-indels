@@ -460,7 +460,7 @@ inh_td = td.filter_entries((td.total_t_from_parents==0) &
                            (td.t_indeterminate==0) &
                            (td.u_indeterminate==0), keep=False)
 
-# Save output
+# Save inherited output
 inh_td_uri = f"{prefix}.ultra.rare.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_uri, overwrite=True)
 inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
@@ -483,7 +483,11 @@ non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non
 non_trio_cases_mt_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
 non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrite=True)
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
-non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
+if simplify_output:
+    non_trio_keep_cols = [c for c in keep_cols if c in non_trio_cases_mt.entries().flatten().row]
+    non_trio_cases_mt.entries().flatten().select(*non_trio_keep_cols).export(non_trio_cases_output_uri)
+else:
+    non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 
 # Control/unaffected samples that aren't parents in complete trios
 all_parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
