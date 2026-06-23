@@ -617,7 +617,7 @@ workflow filterUltraRareInheritedVariants {
 
     # Apply filters to each input VCF file
     scatter (vcf_file in vep_vcf_files) {
-        call helpers.getHailMTSize as getStepInputMTSize {
+        call helpers.getHailMTSize as getStep1InputMTSize {
             input:
                 mt_uri=vcf_file,
                 hail_docker=hail_docker
@@ -626,7 +626,7 @@ workflow filterUltraRareInheritedVariants {
         call step1.hailAnnotateRemote as step1 {
             input:
                 mt_uri=vcf_file,
-                input_size=getStepInputMTSize.mt_size,
+                input_size=getStep1InputMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
