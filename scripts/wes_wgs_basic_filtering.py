@@ -303,11 +303,6 @@ def main(args):
     # WES (should also apply to WGS): pHWE filter
     mt = mt.filter_rows(mt.pHWE < args.phwe_threshold, keep=False)
 
-    # Drop variants with no alleles in sample set
-    mt = hl.variant_qc(mt)
-    mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep=True)
-    mt = mt.drop("variant_qc")
-
     # Calculate sample call rates
     mt = sex_aware_sample_annotations(mt)
 

@@ -512,6 +512,12 @@ csq_columns = header["info"]["CSQ"]["Description"].split("Format: ")[1].split("|
 
 filt_mt = hl.read_matrix_table(filt_mt_uri)
 
+# Drop rows with no variant alleles in sample set
+# (e.g. due to applying basic filters on sample-variant entries)
+filt_mt = hl.variant_qc(filt_mt)
+filt_mt = filt_mt.filter_rows(filt_mt.variant_qc.AC[1] > 0, keep=True)
+filt_mt = filt_mt.drop("variant_qc")
+
 transcript_consequences = filt_mt.info.CSQ.map(lambda csq_str: csq_str.split("\|"))
 
 transcript_consequences_strs = transcript_consequences.map(
