@@ -100,7 +100,7 @@ hl.init(
 
 # Functions
 
-
+# Copied from: https://github.com/ksatterstrom/ASD-Genetics/blob/04d32713f0f87daa7dc087fc7104942985c0489a/parent_aware_t_u_annotations_v4.py
 # Parent-aware TDT annotations
 #
 # This draws heavily from Jack Kosmicki's function,
@@ -116,7 +116,7 @@ hl.init(
 #    proband is hemizygous
 def parent_aware_t_u_annotations_v4(td):
 
-    # First decide copy state
+    # First decide copy state at variant site in proband
     td = td.annotate_entries(
         autosomal_copy_state=(
             hl.case()
