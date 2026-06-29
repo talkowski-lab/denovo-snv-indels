@@ -551,21 +551,16 @@ filt_mt = filt_mt.annotate_rows(
 if coding_only:
     filt_mt = filt_mt.filter_rows(filt_mt.isCoding)
 
-# GnomAD AF filter
-gnomad_af_fill_missing = hl.if_else(hl.is_defined(filt_mt.gnomad_non_neuro_AF), filt_mt.gnomad_non_neuro_AF, 0)
-base_mt = filt_mt.filter_rows(
-    gnomad_af_fill_missing > gnomad_af_threshold, keep=False
-)
-# # Flexible input (exome or genome AFs)
-# gnomad_expr = filt_mt.row
-# for sub_field in gnomad_af_field.split('.'):
-#     gnomad_expr = gnomad_expr[sub_field]
+# Flexible input (exome or genome AFs)
+gnomad_expr = filt_mt.row
+for sub_field in gnomad_af_field.split('.'):
+    gnomad_expr = gnomad_expr[sub_field]
 
-# gnomad_expr_cleaned = hl.if_else(gnomad_expr == "", hl.missing('tstr'), gnomad_expr)
-# gnomad_expr_float = hl.float(gnomad_expr_cleaned)
-# gnomad_af_fill_missing = hl.if_else(hl.is_defined(gnomad_expr_float), gnomad_expr_float, 0.0)
+gnomad_expr_cleaned = hl.if_else(gnomad_expr == "", hl.missing('tstr'), gnomad_expr)
+gnomad_expr_float = hl.float(gnomad_expr_cleaned)
+gnomad_af_fill_missing = hl.if_else(hl.is_defined(gnomad_expr_float), gnomad_expr_float, 0.0)
 
-# base_mt = filt_mt.filter_rows(gnomad_af_fill_missing > gnomad_af_threshold, keep=False)
+base_mt = filt_mt.filter_rows(gnomad_af_fill_missing > gnomad_af_threshold, keep=False)
 
 ped_ht = hl.import_table(
     ped_uri, delimiter="\t", types={"phenotype": hl.tint, "sex": hl.tint}
