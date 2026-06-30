@@ -261,7 +261,7 @@ def main(args):
         homref_snv_indel_cond | het_snv_cond | het_indel_cond, keep=False
     )
 
-    # WES (should also be applied to WES): Filter by het pAB of 0
+    # WES (should also be applied to WGS): Filter by het pAB of 0
     mt = mt.filter_entries(
         mt.GT.is_het() & (mt.pAB < args.het_pab_threshold), keep=False
     )
