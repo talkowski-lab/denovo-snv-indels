@@ -465,42 +465,89 @@ def apply_affected_ac_filter(mt, affected_ac_threshold):
 
 
 def annotate_affected_unaffected_AC(mt, ped_ht):
-    # Annotate phenotype in MT
+# Annotate sex, phenotype from PED
+    mt = mt.annotate_cols(reported_sex = ped_ht[mt.s].sex)
+    mt = mt.annotate_cols(is_female = (mt.reported_sex == 2))
     mt = mt.annotate_cols(phenotype=ped_ht[mt.s].phenotype)
 
-    # Pre-calculate counts of individuals to determine AN
-    n_unaffected = ped_ht.filter(ped_ht.phenotype == 1).count()
-    n_affected = ped_ht.filter(ped_ht.phenotype == 2).count()
-
-    # Get cohort unaffected/affected het and homvar counts
+    # Get GT counts by sex and affected status
     mt = mt.annotate_rows(
-        **{
-            "n_het_unaffected": hl.agg.filter(
-                mt.phenotype == 1, hl.agg.sum(mt.GT.is_het())
-            ),
-            "n_hom_var_unaffected": hl.agg.filter(
-                mt.phenotype == 1, hl.agg.sum(mt.GT.is_hom_var())
-            ),
-            "n_het_affected": hl.agg.filter(
-                mt.phenotype == 2, hl.agg.sum(mt.GT.is_het())
-            ),
-            "n_hom_var_affected": hl.agg.filter(
-                mt.phenotype == 2, hl.agg.sum(mt.GT.is_hom_var())
-            ),
-        }
+        # Unaffected base aggregations
+        unaffected_male_hets=hl.agg.count_where(mt.GT.is_het() & (mt.is_female == False) & (mt.phenotype == 1)),
+        unaffected_male_homvars=hl.agg.count_where(mt.GT.is_hom_var() & (mt.is_female == False) & (mt.phenotype == 1)),
+        unaffected_male_calls=hl.agg.count_where(hl.is_defined(mt.GT) & (mt.is_female == False) & (mt.phenotype == 1)),
+        unaffected_female_hets=hl.agg.count_where(mt.GT.is_het() & (mt.is_female == True) & (mt.phenotype == 1)),
+        unaffected_female_homvars=hl.agg.count_where(mt.GT.is_hom_var() & (mt.is_female == True) & (mt.phenotype == 1)),
+        unaffected_female_calls=hl.agg.count_where(hl.is_defined(mt.GT) & (mt.is_female == True) & (mt.phenotype == 1)),
+
+        # Affected base aggregations
+        affected_male_hets=hl.agg.count_where(mt.GT.is_het() & (mt.is_female == False) & (mt.phenotype == 2)),
+        affected_male_homvars=hl.agg.count_where(mt.GT.is_hom_var() & (mt.is_female == False) & (mt.phenotype == 2)),
+        affected_male_calls=hl.agg.count_where(hl.is_defined(mt.GT) & (mt.is_female == False) & (mt.phenotype == 2)),
+        affected_female_hets=hl.agg.count_where(mt.GT.is_het() & (mt.is_female == True) & (mt.phenotype == 2)),
+        affected_female_homvars=hl.agg.count_where(mt.GT.is_hom_var() & (mt.is_female == True) & (mt.phenotype == 2)),
+        affected_female_calls=hl.agg.count_where(hl.is_defined(mt.GT) & (mt.is_female == True) & (mt.phenotype == 2)),
     )
 
+    # Apply sex-aware chromosome logic
+    # NOTE: PAR calls on Y are assigned to X
     mt = mt.annotate_rows(
-        unaffected_AC=mt.n_het_unaffected + 2 * mt.n_hom_var_unaffected,
-        affected_AC=mt.n_het_affected + 2 * mt.n_hom_var_affected,
-    )
-
-    # Calculate AF, handling division by zero if a group is empty
-    mt = mt.annotate_rows(
-        unaffected_AF=hl.if_else(
-            n_unaffected > 0, mt.unaffected_AC / (2 * n_unaffected), 0.0
+        sex_aware_unaffected_AC=(
+            hl.case()
+            .when(mt.locus.in_y_nonpar(), mt.unaffected_male_homvars)
+            .when(
+                mt.locus.in_x_nonpar(),
+                mt.unaffected_male_homvars
+                + mt.unaffected_female_hets
+                + 2 * mt.unaffected_female_homvars,
+            )
+            .default(
+                mt.unaffected_male_hets
+                + 2 * mt.unaffected_male_homvars
+                + mt.unaffected_female_hets
+                + 2 * mt.unaffected_female_homvars
+            )
         ),
-        affected_AF=hl.if_else(n_affected > 0, mt.affected_AC / (2 * n_affected), 0.0),
+        sex_aware_unaffected_AN=(
+            hl.case()
+            .when(mt.locus.in_y_nonpar(), mt.unaffected_male_calls)
+            .when(
+                mt.locus.in_x_nonpar(),
+                mt.unaffected_male_calls + 2 * mt.unaffected_female_calls
+            )
+            .default(2 * mt.unaffected_male_calls + 2 * mt.unaffected_female_calls)
+        ),
+        sex_aware_affected_AC=(
+            hl.case()
+            .when(mt.locus.in_y_nonpar(), mt.affected_male_homvars)
+            .when(
+                mt.locus.in_x_nonpar(),
+                mt.affected_male_homvars
+                + mt.affected_female_hets
+                + 2 * mt.affected_female_homvars,
+            )
+            .default(
+                mt.affected_male_hets
+                + 2 * mt.affected_male_homvars
+                + mt.affected_female_hets
+                + 2 * mt.affected_female_homvars
+            )
+        ),
+        sex_aware_affected_AN=(
+            hl.case()
+            .when(mt.locus.in_y_nonpar(), mt.affected_male_calls)
+            .when(
+                mt.locus.in_x_nonpar(),
+                mt.affected_male_calls + 2 * mt.affected_female_calls
+            )
+            .default(2 * mt.affected_male_calls + 2 * mt.affected_female_calls)
+        ),
+    )
+
+    # Calculate final AFs
+    mt = mt.annotate_rows(
+        unaffected_AF=hl.if_else(mt.unaffected_AN > 0, mt.unaffected_AC / mt.unaffected_AN, 0.0),
+        affected_AF=hl.if_else(mt.affected_AN > 0, mt.affected_AC / mt.affected_AN, 0.0)
     )
 
     return mt
