@@ -546,8 +546,16 @@ def annotate_affected_unaffected_AC(mt, ped_ht):
 
     # Calculate final AFs
     mt = mt.annotate_rows(
-        unaffected_AF=hl.if_else(mt.unaffected_AN > 0, mt.unaffected_AC / mt.unaffected_AN, 0.0),
-        affected_AF=hl.if_else(mt.affected_AN > 0, mt.affected_AC / mt.affected_AN, 0.0)
+        sex_aware_unaffected_AF=hl.if_else(
+            mt.sex_aware_unaffected_AN > 0,
+            mt.sex_aware_unaffected_AC / mt.sex_aware_unaffected_AN,
+            0.0,
+        ),
+        sex_aware_affected_AF=hl.if_else(
+            mt.sex_aware_affected_AN > 0,
+            mt.sex_aware_affected_AC / mt.sex_aware_affected_AN,
+            0.0,
+        )
     )
 
     return mt
@@ -626,9 +634,9 @@ base_mt = annotate_affected_unaffected_AC(base_mt, ped_ht)
 # Apply affected AC or AF filters if defined
 conditions = []
 if affected_ac_threshold is not None:
-    conditions.append(base_mt.affected_AC <= affected_ac_threshold)
+    conditions.append(base_mt.sex_aware_affected_AC <= affected_ac_threshold)
 if affected_af_threshold is not None:
-    conditions.append(base_mt.affected_AF <= affected_af_threshold)
+    conditions.append(base_mt.sex_aware_affected_AF <= affected_af_threshold)
 
 if conditions:
     ultra_rare_mt = base_mt.filter_rows(hl.any(lambda x: x, conditions))
