@@ -217,13 +217,13 @@ def main(args):
     )
 
     # WGS: Apply row/variant-level filters
-    if args.qual_threshold is not None:
-        mt = mt.filter_rows(mt.qual >= args.qual_threshold)
     if args.mq_threshold is not None:
         mt = mt.filter_rows(mt.info.MQ >= args.mq_threshold)
 
     # WGS: Set SNV row-level variant INFO filters
     snv_cond_row = hl.is_snp(mt.alleles[0], mt.alleles[1])
+    if args.qual_threshold_snv is not None:
+        snv_cond_row = snv_cond_row & (mt.qual >= args.qual_threshold_snv)
     if args.sor_threshold_snv is not None:
         snv_cond_row = snv_cond_row & (mt.info.SOR <= args.sor_threshold_snv)
     if args.readposranksum_threshold_snv is not None:
@@ -234,6 +234,8 @@ def main(args):
         snv_cond_row = snv_cond_row & (mt.info.QD >= args.qd_threshold_snv)
     # WGS: Set indel row-level variant INFO filters
     indel_cond_row = hl.is_indel(mt.alleles[0], mt.alleles[1])
+    if args.qual_threshold_indel is not None:
+        indel_cond_row = indel_cond_row & (mt.qual >= args.qual_threshold_indel)
     if args.sor_threshold_indel is not None:
         indel_cond_row = indel_cond_row & (mt.info.SOR <= args.sor_threshold_indel)
     if args.readposranksum_threshold_indel is not None:
@@ -338,8 +340,9 @@ if __name__ == "__main__":
     parser.add_argument("--max_dpc", type=int, required=True)
     parser.add_argument("--female_min_dp", type=int, required=True)
     parser.add_argument("--male_auto_min_dp", type=int, required=True)
-    parser.add_argument("--qual_threshold", type=int)
     parser.add_argument("--mq_threshold", type=int)
+    parser.add_argument("--qual_threshold_snv", type=float)
+    parser.add_argument("--qual_threshold_indel", type=float)
     parser.add_argument("--sor_threshold_snv", type=float)
     parser.add_argument("--readposranksum_threshold_snv", type=float)
     parser.add_argument("--qd_threshold_snv", type=float)

@@ -21,11 +21,12 @@ struct QcFilters {
     Int? max_dpc
     Int? female_min_dp
     Int? male_auto_min_dp
-    Int? qual_threshold
     Int? mq_threshold
+    Float? qual_threshold_snv
     Float? sor_threshold_snv
     Float? readposranksum_threshold_snv
     Float? qd_threshold_snv
+    Float? qual_threshold_indel
     Float? sor_threshold_indel
     Float? readposranksum_threshold_indel
     Float? qd_threshold_indel
@@ -135,16 +136,10 @@ workflow filterUltraRareInheritedVariants {
                 exclude_gq_filters: true,
                 min_dpc: 10,
                 max_dpc: 200,
-                qual_threshold: 30,
-                mq_threshold: 0,
-                sor_threshold_snv: 10,
-                readposranksum_threshold_snv: -10,
-                qd_threshold_snv: 0,
-                sor_threshold_indel: 10,
-                readposranksum_threshold_indel: -10,
-                qd_threshold_indel: 0,
+                qual_threshold_snv: 10.41,
                 min_het_snv_ab: 0.22,
                 max_het_snv_ab: 0.78,
+                qual_threshold_indel: 7.83,
                 min_het_indel_ab: 0.20,
                 max_het_indel_ab: 0.80
             }
@@ -162,11 +157,12 @@ workflow filterUltraRareInheritedVariants {
                 exclude_gq_filters: false,
                 min_dpc: 10,
                 max_dpc: 200,
-                qual_threshold: 150,
                 mq_threshold: 50,
+                qual_threshold_snv: 150,
                 sor_threshold_snv: 2.5,
                 readposranksum_threshold_snv: -1.4,
                 qd_threshold_snv: 3.0,
+                qual_threshold_indel: 150,
                 sor_threshold_indel: 3.0,
                 readposranksum_threshold_indel: -1.7,
                 qd_threshold_indel: 4.0,
@@ -231,15 +227,15 @@ workflow filterUltraRareInheritedVariants {
             then control_qc_filters.male_auto_min_dp
             else qc_filters_default.male_auto_min_dp
         ),
-        qual_threshold: (
-            if defined(control_qc_filters.qual_threshold)
-            then control_qc_filters.qual_threshold
-            else qc_filters_default.qual_threshold
-        ),
         mq_threshold: (
             if defined(control_qc_filters.mq_threshold)
             then control_qc_filters.mq_threshold
             else qc_filters_default.mq_threshold
+        ),
+        qual_threshold_snv: (
+            if defined(control_qc_filters.qual_threshold_snv)
+            then control_qc_filters.qual_threshold_snv
+            else qc_filters_default.qual_threshold_snv
         ),
         sor_threshold_snv: (
             if defined(control_qc_filters.sor_threshold_snv)
@@ -255,6 +251,11 @@ workflow filterUltraRareInheritedVariants {
             if defined(control_qc_filters.qd_threshold_snv)
             then control_qc_filters.qd_threshold_snv
             else qc_filters_default.qd_threshold_snv
+        ),
+        qual_threshold_indel: (
+            if defined(control_qc_filters.qual_threshold_indel)
+            then control_qc_filters.qual_threshold_indel
+            else qc_filters_default.qual_threshold_indel
         ),
         sor_threshold_indel: (
             if defined(control_qc_filters.sor_threshold_indel)
@@ -368,15 +369,15 @@ workflow filterUltraRareInheritedVariants {
             then trio_case_qc_filters.male_auto_min_dp
             else qc_filters_default.male_auto_min_dp
         ),
-        qual_threshold: (
-            if defined(trio_case_qc_filters.qual_threshold)
-            then trio_case_qc_filters.qual_threshold
-            else qc_filters_default.qual_threshold
-        ),
         mq_threshold: (
             if defined(trio_case_qc_filters.mq_threshold)
             then trio_case_qc_filters.mq_threshold
             else qc_filters_default.mq_threshold
+        ),
+        qual_threshold_snv: (
+            if defined(trio_case_qc_filters.qual_threshold_snv)
+            then trio_case_qc_filters.qual_threshold_snv
+            else qc_filters_default.qual_threshold_snv
         ),
         sor_threshold_snv: (
             if defined(trio_case_qc_filters.sor_threshold_snv)
@@ -392,6 +393,11 @@ workflow filterUltraRareInheritedVariants {
             if defined(trio_case_qc_filters.qd_threshold_snv)
             then trio_case_qc_filters.qd_threshold_snv
             else qc_filters_default.qd_threshold_snv
+        ),
+        qual_threshold_indel: (
+            if defined(trio_case_qc_filters.qual_threshold_indel)
+            then trio_case_qc_filters.qual_threshold_indel
+            else qc_filters_default.qual_threshold_indel
         ),
         sor_threshold_indel: (
             if defined(trio_case_qc_filters.sor_threshold_indel)
@@ -505,15 +511,15 @@ workflow filterUltraRareInheritedVariants {
             then nontrio_case_qc_filters.male_auto_min_dp
             else qc_filters_default.male_auto_min_dp
         ),
-        qual_threshold: (
-            if defined(nontrio_case_qc_filters.qual_threshold)
-            then nontrio_case_qc_filters.qual_threshold
-            else qc_filters_default.qual_threshold
-        ),
         mq_threshold: (
             if defined(nontrio_case_qc_filters.mq_threshold)
             then nontrio_case_qc_filters.mq_threshold
             else qc_filters_default.mq_threshold
+        ),
+        qual_threshold_snv: (
+            if defined(nontrio_case_qc_filters.qual_threshold_snv)
+            then nontrio_case_qc_filters.qual_threshold_snv
+            else qc_filters_default.qual_threshold_snv
         ),
         sor_threshold_snv: (
             if defined(nontrio_case_qc_filters.sor_threshold_snv)
@@ -529,6 +535,11 @@ workflow filterUltraRareInheritedVariants {
             if defined(nontrio_case_qc_filters.qd_threshold_snv)
             then nontrio_case_qc_filters.qd_threshold_snv
             else qc_filters_default.qd_threshold_snv
+        ),
+        qual_threshold_indel: (
+            if defined(nontrio_case_qc_filters.qual_threshold_indel)
+            then nontrio_case_qc_filters.qual_threshold_indel
+            else qc_filters_default.qual_threshold_indel
         ),
         sor_threshold_indel: (
             if defined(nontrio_case_qc_filters.sor_threshold_indel)
@@ -663,11 +674,12 @@ workflow filterUltraRareInheritedVariants {
                     max_dpc=control_qc_filters_override.max_dpc,
                     female_min_dp=control_qc_filters_override.female_min_dp,
                     male_auto_min_dp=control_qc_filters_override.male_auto_min_dp,
-                    qual_threshold=control_qc_filters_override.qual_threshold,
                     mq_threshold=control_qc_filters_override.mq_threshold,
+                    qual_threshold_snv=control_qc_filters_override.qual_threshold_snv,
                     sor_threshold_snv=control_qc_filters_override.sor_threshold_snv,
                     readposranksum_threshold_snv=control_qc_filters_override.readposranksum_threshold_snv,
                     qd_threshold_snv=control_qc_filters_override.qd_threshold_snv,
+                    qual_threshold_indel=control_qc_filters_override.qual_threshold_indel,
                     sor_threshold_indel=control_qc_filters_override.sor_threshold_indel,
                     readposranksum_threshold_indel=control_qc_filters_override.readposranksum_threshold_indel,
                     qd_threshold_indel=control_qc_filters_override.qd_threshold_indel,
@@ -705,11 +717,12 @@ workflow filterUltraRareInheritedVariants {
                     max_dpc=trio_case_qc_filters_override.max_dpc,
                     female_min_dp=trio_case_qc_filters_override.female_min_dp,
                     male_auto_min_dp=trio_case_qc_filters_override.male_auto_min_dp,
-                    qual_threshold=trio_case_qc_filters_override.qual_threshold,
                     mq_threshold=trio_case_qc_filters_override.mq_threshold,
+                    qual_threshold_snv=trio_case_qc_filters_override.qual_threshold_snv,
                     sor_threshold_snv=trio_case_qc_filters_override.sor_threshold_snv,
                     readposranksum_threshold_snv=trio_case_qc_filters_override.readposranksum_threshold_snv,
                     qd_threshold_snv=trio_case_qc_filters_override.qd_threshold_snv,
+                    qual_threshold_indel=trio_case_qc_filters_override.qual_threshold_indel,
                     sor_threshold_indel=trio_case_qc_filters_override.sor_threshold_indel,
                     readposranksum_threshold_indel=trio_case_qc_filters_override.readposranksum_threshold_indel,
                     qd_threshold_indel=trio_case_qc_filters_override.qd_threshold_indel,
@@ -747,11 +760,12 @@ workflow filterUltraRareInheritedVariants {
                     max_dpc=nontrio_case_qc_filters_override.max_dpc,
                     female_min_dp=nontrio_case_qc_filters_override.female_min_dp,
                     male_auto_min_dp=nontrio_case_qc_filters_override.male_auto_min_dp,
-                    qual_threshold=nontrio_case_qc_filters_override.qual_threshold,
                     mq_threshold=nontrio_case_qc_filters_override.mq_threshold,
+                    qual_threshold_snv=nontrio_case_qc_filters_override.qual_threshold_snv,
                     sor_threshold_snv=nontrio_case_qc_filters_override.sor_threshold_snv,
                     readposranksum_threshold_snv=nontrio_case_qc_filters_override.readposranksum_threshold_snv,
                     qd_threshold_snv=nontrio_case_qc_filters_override.qd_threshold_snv,
+                    qual_threshold_indel=nontrio_case_qc_filters_override.qual_threshold_indel,
                     sor_threshold_indel=nontrio_case_qc_filters_override.sor_threshold_indel,
                     readposranksum_threshold_indel=nontrio_case_qc_filters_override.readposranksum_threshold_indel,
                     qd_threshold_indel=nontrio_case_qc_filters_override.qd_threshold_indel,
@@ -918,11 +932,12 @@ task step2HailBasicFilteringRemote {
         Int? max_dpc
         Int? female_min_dp
         Int? male_auto_min_dp
-        Int? qual_threshold
         Int? mq_threshold
+        Float? qual_threshold_snv
         Float? sor_threshold_snv
         Float? readposranksum_threshold_snv
         Float? qd_threshold_snv
+        Float? qual_threshold_indel
         Float? sor_threshold_indel
         Float? readposranksum_threshold_indel
         Float? qd_threshold_indel
@@ -992,8 +1007,8 @@ task step2HailBasicFilteringRemote {
             ~{if defined(max_dpc) then "--max_dpc ~{max_dpc}" else ""} \
             ~{if defined(female_min_dp) then "--female_min_dp ~{female_min_dp}" else ""} \
             ~{if defined(male_auto_min_dp) then "--male_auto_min_dp ~{male_auto_min_dp}" else ""} \
-            ~{if defined(qual_threshold) then "--qual_threshold ~{qual_threshold}" else ""} \
             ~{if defined(mq_threshold) then "--mq_threshold ~{mq_threshold}" else ""} \
+            ~{if defined(qual_threshold_snv) then "--qual_threshold_snv ~{qual_threshold_snv}" else ""} \
             ~{if defined(sor_threshold_snv) then "--sor_threshold_snv ~{sor_threshold_snv}" else ""} \
             ~{
                 if defined(readposranksum_threshold_snv)
@@ -1001,6 +1016,7 @@ task step2HailBasicFilteringRemote {
                 else ""
             } \
             ~{if defined(qd_threshold_snv) then "--qd_threshold_snv ~{qd_threshold_snv}" else ""} \
+            ~{if defined(qual_threshold_indel) then "--qual_threshold_indel ~{qual_threshold_indel}" else ""} \
             ~{
                 if defined(sor_threshold_indel)
                 then "--sor_threshold_indel ~{sor_threshold_indel}" else ""
