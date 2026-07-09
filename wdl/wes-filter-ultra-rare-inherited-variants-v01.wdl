@@ -101,8 +101,8 @@ workflow filterUltraRareInheritedVariants {
     if (!is_genome) {
         QcFilters qc_filters_exome_default = object {
             filter_snv_pass: qc_filters_all_default.filter_snv_pass,
-            female_min_dp: qc_filters_all_default.female_min_dp,
-            male_auto_min_dp: qc_filters_all_default.male_auto_min_dp,
+            female_min_dp: 7,
+            male_auto_min_dp: 7,
             max_homref_ab: qc_filters_all_default.max_homref_ab,
             het_pab_threshold: qc_filters_all_default.het_pab_threshold,
             phwe_threshold: qc_filters_all_default.phwe_threshold,
@@ -171,7 +171,7 @@ workflow filterUltraRareInheritedVariants {
                 min_het_indel_ab: 0.20,
                 max_het_indel_ab: 0.80,
                 # min_mean_gq: 50,
-                min_gq: 99
+                min_gq: 40
             }
         }
     }
