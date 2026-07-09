@@ -48,6 +48,7 @@ workflow filterUltraRareInheritedVariants {
     input {
         # step1
         Array[File] vep_vcf_files
+        Array[File]? annot_mt_uris
         String mpc_ht_uri
         String gnomad_ht_uri
         String hail_annotation_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_denovo_annotation.py"
@@ -626,31 +627,38 @@ workflow filterUltraRareInheritedVariants {
             hail_docker=hail_docker
     }
 
-    # Apply filters to each input VCF file
-    scatter (vcf_file in vep_vcf_files) {
-        call helpers.getHailMTSize as getStep1InputMTSize {
-            input:
-                mt_uri=vcf_file,
-                hail_docker=hail_docker
+    # Run step1 annotation if not passing in already-generated output of step1 annotation
+    if (!defined(annot_mt_uris)) {
+        # Apply filters to each input VCF file
+        scatter (vcf_file in vep_vcf_files) {
+            call helpers.getHailMTSize as getStep1InputMTSize {
+                input:
+                    mt_uri=vcf_file,
+                    hail_docker=hail_docker
+            }
+            # Annotate VCF and save as MT
+            call step1.hailAnnotateRemote as step1 {
+                input:
+                    mt_uri=vcf_file,
+                    input_size=getStep1InputMTSize.mt_size,
+                    ped_sex_qc=ped_sex_qc,
+                    mpc_ht_uri=mpc_ht_uri,
+                    gnomad_ht_uri=gnomad_ht_uri,
+                    bucket_id=bucket_id,
+                    cohort_prefix=cohort_prefix,
+                    hail_annotation_script=hail_annotation_script,
+                    genome_build=genome_build,
+                    hail_docker=hail_docker
+            }
         }
-        # Annotate VCF and save as MT
-        call step1.hailAnnotateRemote as step1 {
-            input:
-                mt_uri=vcf_file,
-                input_size=getStep1InputMTSize.mt_size,
-                ped_sex_qc=ped_sex_qc,
-                mpc_ht_uri=mpc_ht_uri,
-                gnomad_ht_uri=gnomad_ht_uri,
-                bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
-                hail_annotation_script=hail_annotation_script,
-                genome_build=genome_build,
-                hail_docker=hail_docker
-        }
-
+    }
+    Array[File] step1_annot_mts = select_first([annot_mt_uris, step1.annot_mt])
+    scatter (vcf_step1_annot_mt_pair in zip(vep_vcf_files, step1_annot_mts)) {
+        File vcf_file = vcf_step1_annot_mt_pair.left
+        File step1_annot_mt = vcf_step1_annot_mt_pair.right
         call helpers.getHailMTSize as getStep1MTSize {
             input:
-                mt_uri=step1.annot_mt,
+                mt_uri=step1_annot_mt,
                 hail_docker=hail_docker
         }
 
@@ -659,7 +667,7 @@ workflow filterUltraRareInheritedVariants {
             call step2HailBasicFilteringRemote as step2Controls {
                 input:
                     lcr_uri=lcr_uri,
-                    annot_mt=step1.annot_mt,
+                    annot_mt=step1_annot_mt,
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=subsetTrioCaseControlPed.controls_ped,
                     bucket_id=bucket_id,
@@ -702,7 +710,7 @@ workflow filterUltraRareInheritedVariants {
             call step2HailBasicFilteringRemote as step2TrioCases {
                 input:                    
                     lcr_uri=lcr_uri,
-                    annot_mt=step1.annot_mt,
+                    annot_mt=step1_annot_mt,
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=subsetTrioCaseControlPed.trio_cases_ped,
                     bucket_id=bucket_id,
@@ -745,7 +753,7 @@ workflow filterUltraRareInheritedVariants {
             call step2HailBasicFilteringRemote as step2NontrioCases {
                 input:
                     lcr_uri=lcr_uri,
-                    annot_mt=step1.annot_mt,
+                    annot_mt=step1_annot_mt,
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=subsetTrioCaseControlPed.nontrio_cases_ped,
                     bucket_id=bucket_id,
@@ -796,7 +804,7 @@ workflow filterUltraRareInheritedVariants {
                 ),
                 bucket_id=bucket_id,
                 merged_filename=(
-                    basename(step1.annot_mt, "_wes_denovo_annot.mt") +
+                    basename(step1_annot_mt, "_wes_denovo_annot.mt") +
                     '.basic_filtering.merged'
                 ),
                 join_outer=true,
