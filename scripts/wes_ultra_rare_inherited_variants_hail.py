@@ -38,15 +38,24 @@ def parse_args():
     add("--filt-mt-uri", required=True)
     add("--ped-uri", required=True)
 
-    add("--gnomad-non-neuro-af-threshold", type=float, default=0.001)
+    add("--gnomad-af-field", type=str, default='gnomad_non_neuro_AF')
+    add("--gnomad-af-threshold", type=float, default=0.001)
     add("--cohort-ac-threshold", type=int, default=20)
     add("--cohort-af-threshold", type=float, default=0.001)
     add("--affected-ac-threshold", type=int, default=None)  # Optional
     add("--affected-af-threshold", type=float, default=None)  # Optional
     add("--coding-only", action="store_true")
+    add("--simple", action="store_true")
+    # "--keep-cols" list only input if "--simple" is included?
+    add("--keep-cols", nargs="+", default=None, help="Columns to keep when using --simple")    
     add("--mem", type=float, default=4)
 
-    return p.parse_args()
+    parser = p.parse_args()
+
+    if parser.simple and parser.keep_cols is None:
+        parser.error("--keep-cols is required when using --simple")
+
+    return parser
 
 
 args = parse_args()
@@ -54,13 +63,17 @@ args = parse_args()
 vep_vcf_uri = args.vep_vcf_uri
 filt_mt_uri = args.filt_mt_uri
 ped_uri = args.ped_uri
-gnomad_non_neuro_af_threshold = args.gnomad_non_neuro_af_threshold
+gnomad_af_threshold = args.gnomad_af_threshold
+gnomad_af_field = args.gnomad_af_field
 cohort_ac_threshold = args.cohort_ac_threshold
 cohort_af_threshold = args.cohort_af_threshold
 affected_ac_threshold = args.affected_ac_threshold
 affected_af_threshold = args.affected_af_threshold
 coding_only = args.coding_only
+simplify_output = args.simple
+keep_cols = args.keep_cols
 mem = args.mem
+
 
 prefix = os.path.basename(filt_mt_uri).split('.mt')[0]
 
@@ -293,31 +306,30 @@ def apply_cohort_ac_af_filters(mt, cohort_ac_threshold, cohort_af_threshold):
 def apply_affected_ac_filter(mt, affected_ac_threshold):
     return mt.filter_rows(mt.affected_AC <= affected_ac_threshold)
 
+
 def annotate_affected_unaffected_AC(mt, ped_ht):
-    # Annotate phenotype in MT
+    # 1. Annotate phenotype onto columns safely
     mt = mt.annotate_cols(phenotype=ped_ht[mt.s].phenotype)
     
-    # Pre-calculate counts of individuals to determine AN
-    n_unaffected = ped_ht.filter(ped_ht.phenotype == 1).count()
-    n_affected = ped_ht.filter(ped_ht.phenotype == 2).count()
-
-    # Get cohort unaffected/affected het and homvar counts
-    mt = mt.annotate_rows(**{
-        "n_het_unaffected": hl.agg.filter(mt.phenotype==1, hl.agg.sum(mt.GT.is_het())),
-        "n_hom_var_unaffected": hl.agg.filter(mt.phenotype==1, hl.agg.sum(mt.GT.is_hom_var())),
-        "n_het_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_het())),
-        "n_hom_var_affected": hl.agg.filter(mt.phenotype==2, hl.agg.sum(mt.GT.is_hom_var()))
-    })
-    
+    # 2. Compute counts, AC, and AN dynamically per row
     mt = mt.annotate_rows(
-        unaffected_AC = mt.n_het_unaffected + 2*mt.n_hom_var_unaffected,
-        affected_AC = mt.n_het_affected + 2*mt.n_hom_var_affected
+        # Unaffected counts
+        n_het_unaffected = hl.agg.count_where((mt.phenotype == 1) & mt.GT.is_het()),
+        n_hom_var_unaffected = hl.agg.count_where((mt.phenotype == 1) & mt.GT.is_hom_var()),
+        unaffected_AC = hl.agg.sum(hl.if_else(mt.phenotype == 1, mt.GT.n_alt_alleles(), 0)),
+        unaffected_AN = hl.agg.sum(hl.if_else(mt.phenotype == 1, mt.GT.ploidy, 0)),
+        
+        # Affected counts
+        n_het_affected = hl.agg.count_where((mt.phenotype == 2) & mt.GT.is_het()),
+        n_hom_var_affected = hl.agg.count_where((mt.phenotype == 2) & mt.GT.is_hom_var()),
+        affected_AC = hl.agg.sum(hl.if_else(mt.phenotype == 2, mt.GT.n_alt_alleles(), 0)),
+        affected_AN = hl.agg.sum(hl.if_else(mt.phenotype == 2, mt.GT.ploidy, 0))
     )
 
-    # Calculate AF, handling division by zero if a group is empty
+    # 3. Calculate AF using the dynamic row-level AN
     mt = mt.annotate_rows(
-        unaffected_AF = hl.if_else(n_unaffected > 0, mt.unaffected_AC / (2 * n_unaffected), 0.0),
-        affected_AF = hl.if_else(n_affected > 0, mt.affected_AC / (2 * n_affected), 0.0)
+        unaffected_AF = hl.if_else(mt.unaffected_AN > 0, mt.unaffected_AC / mt.unaffected_AN, 0.0),
+        affected_AF = hl.if_else(mt.affected_AN > 0, mt.affected_AC / mt.affected_AN, 0.0)
     )
 
     return mt
@@ -342,9 +354,28 @@ filt_mt = process_consequences(filt_mt)
 filt_mt = filt_mt.annotate_rows(worst_csq=filt_mt.vep.worst_csq)
 filt_mt = filt_mt.drop('vep')
 
+# Annotate isCoding
+coding_variant_set = hl.set(coding_variants)
+filt_mt = filt_mt.annotate_rows(
+    isCoding=coding_variant_set.contains(
+        filt_mt.worst_csq.most_severe_consequence
+    )
+)
+# Output coding only
+if coding_only:
+    filt_mt = filt_mt.filter_rows(filt_mt.isCoding)
+
 # GnomAD AF filter
-gnomad_af_fill_missing = hl.if_else(hl.is_defined(filt_mt.gnomad_non_neuro_AF), filt_mt.gnomad_non_neuro_AF, 0)
-base_mt = filt_mt.filter_rows(gnomad_af_fill_missing > gnomad_non_neuro_af_threshold, keep=False)
+# Flexible input (exome or genome AFs)
+gnomad_expr = filt_mt.row
+for sub_field in gnomad_af_field.split('.'):
+    gnomad_expr = gnomad_expr[sub_field]
+
+gnomad_expr_cleaned = hl.if_else(gnomad_expr == "", hl.missing('tstr'), gnomad_expr)
+gnomad_expr_float = hl.float(gnomad_expr_cleaned)
+gnomad_af_fill_missing = hl.if_else(hl.is_defined(gnomad_expr_float), gnomad_expr_float, 0.0)
+
+base_mt = filt_mt.filter_rows(gnomad_af_fill_missing > gnomad_af_threshold, keep=False)
 
 ped_ht = hl.import_table(ped_uri, delimiter='\t',
                           types={'phenotype': hl.tfloat, 'sex': hl.tfloat}).key_by('sample_id')
@@ -428,14 +459,15 @@ inh_td = td.filter_entries((td.total_t_from_parents==0) &
                            (td.t_indeterminate==0) &
                            (td.u_indeterminate==0), keep=False)
 
-# Output coding only
-if coding_only:
-    inh_td = inh_td.filter_rows(hl.array(coding_variants).contains(
-        inh_td.worst_csq.most_severe_consequence))
+# Save inherited output
 inh_td_uri = f"{prefix}.ultra.rare.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_uri, overwrite=True)
 inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
-inh_td.entries().flatten().export(inh_output_uri)
+if simplify_output:
+    inh_keep_cols = [c for c in keep_cols if c in inh_td.entries().flatten().row]
+    inh_td.entries().flatten().select(*inh_keep_cols).export(inh_output_uri)
+else:
+    inh_td.entries().flatten().export(inh_output_uri)
 
 ## Ultra-rare in cases/controls ##
 tm = hl.trio_matrix(ultra_rare_mt, pedigree)
@@ -447,14 +479,14 @@ if len(non_trio_cases)==0:
     non_trio_cases = ['']
 non_trio_cases_mt = case_filtered_mt.filter_cols(hl.array(non_trio_cases).contains(case_filtered_mt.s))
 non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non_ref())
-# Output coding only
-if coding_only:
-    non_trio_cases_mt = non_trio_cases_mt.filter_rows(hl.array(coding_variants).contains(
-        non_trio_cases_mt.worst_csq.most_severe_consequence))
 non_trio_cases_mt_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
 non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrite=True)
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
-non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
+if simplify_output:
+    non_trio_keep_cols = [c for c in keep_cols if c in non_trio_cases_mt.entries().flatten().row]
+    non_trio_cases_mt.entries().flatten().select(*non_trio_keep_cols).export(non_trio_cases_output_uri)
+else:
+    non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 
 # Control/unaffected samples that aren't parents in complete trios
 all_parent_samples = [s for s in [trio.pat_id for trio in pedigree.trios] + \
@@ -468,11 +500,11 @@ if len(control_samples)==0:
 control_tm = tm.filter_cols((hl.array(control_samples).contains(tm.id)) &
                            (~hl.array(complete_trio_parent_samples).contains(tm.id)))
 control_tm = control_tm.filter_entries(control_tm.proband_entry.GT.is_non_ref())
-# Output coding only
-if coding_only:
-    control_tm = control_tm.filter_rows(hl.array(coding_variants).contains(
-        control_tm.worst_csq.most_severe_consequence))
 control_tm_uri = f"{prefix}.ultra.rare.controls.mt"
 control_tm = control_tm.checkpoint(control_tm_uri, overwrite=True)
 control_output_uri = f"{prefix}.ultra.rare.controls.tsv.gz"
-control_tm.entries().flatten().export(control_output_uri)
+if simplify_output:
+    control_keep_cols = [c for c in keep_cols if c in control_tm.entries().flatten().row]
+    control_tm.entries().flatten().select(*control_keep_cols).export(control_output_uri)
+else:
+    control_tm.entries().flatten().export(control_output_uri)

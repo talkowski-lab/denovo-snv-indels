@@ -63,12 +63,19 @@ workflow filterUltraRareInheritedVariants {
         String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_ultra_rare_inherited_variants_hail.py"
 
         String genome_build='GRCh38'
-        Float gnomad_non_neuro_af_threshold=0.001
+        String gnomad_af_field='gnomad_non_neuro_AF'
+        Float gnomad_af_threshold=0.001
         Float cohort_af_threshold=0.001
         Int cohort_ac_threshold=20
         Int? affected_ac_threshold
         Float? affected_af_threshold
         Boolean coding_only=true
+        Boolean simplify_output=false
+        Array[String] keep_cols=[
+            "locus", "alleles", "id", "proband.s", "mother.s", "father.s", "fam_id", "proband_entry.GT", "mother_entry.GT", "father_entry.GT",
+            "t_from_dad", "t_from_mom", "u_from_dad", "u_from_mom", "t_indeterminate", "u_indeterminate", "tdt.chi_sq", "tdt.p_value",
+            "total_t_from_parents", "total_u_from_parents", "worst_csq.SYMBOL", "worst_csq.Consequence", "worst_csq.most_severe_consequence", "worst_csq.gnomADg_AF", "info.PREDICTED_NONCODING", "isCoding"
+        ]
     }
 
     QcFilters qc_filters_default = object {
@@ -441,7 +448,7 @@ workflow filterUltraRareInheritedVariants {
                 ),
                 # cohort_prefix=cohort_prefix,
                 bucket_id=bucket_id,
-                merged_filename=cohort_prefix + '.merged',
+                merged_filename=basename(step1.annot_mt, '.mt') + '.merged',
                 join_outer=true,
                 hail_docker=hail_docker
         }
@@ -469,12 +476,15 @@ workflow filterUltraRareInheritedVariants {
                 cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
-                gnomad_non_neuro_af_threshold=gnomad_non_neuro_af_threshold,
+                gnomad_af_field=gnomad_af_field,
+                gnomad_af_threshold=gnomad_af_threshold,
                 cohort_ac_threshold=cohort_ac_threshold,
                 cohort_af_threshold=cohort_af_threshold,
                 affected_ac_threshold=affected_ac_threshold,
                 affected_af_threshold=affected_af_threshold,
-                coding_only=coding_only
+                coding_only=coding_only,
+                simplify_output=simplify_output,
+                keep_cols=keep_cols
         }
     }
 
@@ -520,12 +530,15 @@ task hailUltraRareInheritedFilteringRemote {
         String cohort_prefix
         String hail_ultra_rare_inherited_filtering_script
         String hail_docker
-        Float gnomad_non_neuro_af_threshold
+        String gnomad_af_field
+        Float gnomad_af_threshold
         Int cohort_ac_threshold
         Float cohort_af_threshold
         Int? affected_ac_threshold
         Float? affected_af_threshold
         Boolean coding_only
+        Boolean simplify_output
+        Array[String] keep_cols
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -554,19 +567,23 @@ task hailUltraRareInheritedFilteringRemote {
         docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
-
+    Array[String] keep_cols_for_cmd = if simplify_output then keep_cols else []
+    
     command <<<
         curl ~{hail_ultra_rare_inherited_filtering_script} > hail_ultra_rare_inherited_filtering_script.py
         python3 hail_ultra_rare_inherited_filtering_script.py \
             --ped-uri ~{ped_sex_qc} \
             --filt-mt-uri ~{filtered_mt} \
             --vep-vcf-uri ~{vep_vcf_file} \
-            --gnomad-non-neuro-af-threshold ~{gnomad_non_neuro_af_threshold} \
+            --gnomad-af-field ~{gnomad_af_field} \
+            --gnomad-af-threshold ~{gnomad_af_threshold} \
             --cohort-ac-threshold ~{cohort_ac_threshold} \
             --cohort-af-threshold ~{cohort_af_threshold} \
             ~{if defined(affected_ac_threshold) then "--affected-ac-threshold ~{affected_ac_threshold}" else ""} \
             ~{if defined(affected_af_threshold) then "--affected-af-threshold ~{affected_af_threshold}" else ""} \
             ~{true='--coding-only' false='' coding_only} \
+            ~{true='--simple' false='' simplify_output} \
+            ~{if simplify_output then "--keep-cols " else ""}~{sep=" " keep_cols_for_cmd} \
             --mem ~{memory}
     >>>
 
