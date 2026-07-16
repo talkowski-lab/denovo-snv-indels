@@ -36,7 +36,7 @@ if file.split('.')[-1] == 'mt':
     mt = hl.read_matrix_table(file)
     prefix = os.path.basename(file).split('.mt')[0]
 else:
-    mt = hl.import_vcf(file, reference_genome = genome_build, array_elements_required=False, force_bgz=True)
+    mt = hl.import_vcf(file, reference_genome = genome_build, array_elements_required=False, call_fields=[], force_bgz=True)
     prefix = os.path.basename(file).split('.vcf')[0]
 
 # Step 1: Annotations
