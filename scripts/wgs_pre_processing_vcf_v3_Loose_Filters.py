@@ -33,28 +33,28 @@ def str2bool(v):
 parser = argparse.ArgumentParser(description="Preprocess VCF with filtering thresholds")
 
 # Required file/string inputs
-parser.add_argument("--lcr_uri", required=True)
-parser.add_argument("--ped_uri", required=True)
-parser.add_argument("--meta_uri", required=True)
-parser.add_argument("--trio_uri", required=True)
-parser.add_argument("--vcf_uri", required=True)
+parser.add_argument("--lcr-uri", required=True)
+parser.add_argument("--ped-uri", required=True)
+parser.add_argument("--meta-uri", required=True)
+parser.add_argument("--trio-uri", required=True)
+parser.add_argument("--vcf-uri", required=True)
 
 # Booleans
-parser.add_argument("--filter_pass", type=str2bool, required=True)
-parser.add_argument("--exclude_gq_filters", type=str2bool, required=True)
+parser.add_argument("--filter-pass", type=str2bool, required=True)
+parser.add_argument("--exclude-gq-filters", type=str2bool, required=True)
 
 # Thresholds
-parser.add_argument("--qual_threshold", type=int, required=True)
-parser.add_argument("--sample_dp_min", type=int, required=True)   # ✅ added
-parser.add_argument("--sample_dp_max", type=int, required=True)   # ✅ added
+parser.add_argument("--qual-threshold", type=int, required=True)
+parser.add_argument("--sample-dp-min", type=int, required=True)   # ✅ added
+parser.add_argument("--sample-dp-max", type=int, required=True)   # ✅ added
 
-parser.add_argument("--sor_threshold_indel", type=float, required=True)
-parser.add_argument("--sor_threshold_snv", type=float, required=True)
-parser.add_argument("--readposranksum_threshold_indel", type=float, required=True)
-parser.add_argument("--readposranksum_threshold_snv", type=float, required=True)
-parser.add_argument("--qd_threshold_indel", type=float, required=True)
-parser.add_argument("--qd_threshold_snv", type=float, required=True)
-parser.add_argument("--mq_threshold", type=float, required=True)
+parser.add_argument("--sor-threshold-indel", type=float, required=True)
+parser.add_argument("--sor-threshold-snv", type=float, required=True)
+parser.add_argument("--readposranksum-threshold-indel", type=float, required=True)
+parser.add_argument("--readposranksum-threshold-snv", type=float, required=True)
+parser.add_argument("--qd-threshold-indel", type=float, required=True)
+parser.add_argument("--qd-threshold-snv", type=float, required=True)
+parser.add_argument("--mq-threshold", type=float, required=True)
 
 # Runtime
 parser.add_argument("--cores", required=True)  # keep as string if needed
