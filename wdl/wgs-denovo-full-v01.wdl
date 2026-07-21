@@ -56,7 +56,7 @@ workflow wgs_denovo_full {
         String hail_docker
         String jvarkit_docker
         String sample_column
-        Int batch_size
+        Int batch_size=10
 
         Boolean filter_pass=true
         Boolean exclude_gq_filters=false
@@ -71,7 +71,7 @@ workflow wgs_denovo_full {
         Float qd_threshold_indel=4.0
         Float qd_threshold_snv=3.0
         Float mq_threshold=50
-        Float minDQ
+        Float minDQ=2
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
@@ -201,7 +201,7 @@ workflow wgs_denovo_full {
     call step4.step4 as step4 {
         input:
             ped_uri_trios=step3.ped_uri_trios,
-            split_trio_vcfs=step3.split_trio_vcfs,
+            split_trio_annot_vcfs=step3.split_trio_annot_vcfs,
             # get_sample_pedigree_script=get_sample_pedigree_script,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ

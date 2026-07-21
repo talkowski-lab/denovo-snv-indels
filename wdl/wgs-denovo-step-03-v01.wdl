@@ -20,7 +20,7 @@ workflow step3 {
         String trio_denovo_docker
         String uberSplit_v3_script
         String subset_ped_script
-        Int batch_size
+        Int batch_size=10
 
         File hg38_reference
         File hg38_reference_fai
@@ -28,7 +28,11 @@ workflow step3 {
         String jvarkit_docker
 
         Boolean subset_ped=true
+        RuntimeAttr? runtime_attr_subset_ped
         RuntimeAttr? runtime_attr_uber_split
+        RuntimeAttr? runtime_attr_annotate_hp_vaf
+        RuntimeAttr? runtime_attr_combine_vcfs
+
     }
 
     String stats_file = cohort_prefix + "_stats.txt"
@@ -39,7 +43,8 @@ workflow step3 {
                 ped_sex_qc=ped_sex_qc,
                 vcf_file=merged_preprocessed_vcf_file_filtered,
                 trio_denovo_docker=trio_denovo_docker,
-                subset_ped_script=subset_ped_script
+                subset_ped_script=subset_ped_script,
+                runtime_attr_override=runtime_attr_subset_ped
         }
     }
 
@@ -64,7 +69,9 @@ workflow step3 {
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
-            jvarkit_docker=jvarkit_docker
+            jvarkit_docker=jvarkit_docker,
+            runtime_attr_annotate_hp_vaf=runtime_attr_annotate_hp_vaf,
+            runtime_attr_combine_vcfs=runtime_attr_combine_vcfs
     }
 
     output {
