@@ -1,7 +1,5 @@
 version 1.0
 
-import "mergeSplitVCF.wdl" as mergeSplitVCF
-import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/mergeVCFs.wdl" as mergeVCFs
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
 import "downsampleVariantsfromTSV.wdl" as downsampleVariantsfromTSV
 import "prioritizeCSQ.wdl" as prioritizeCSQ
@@ -20,19 +18,18 @@ workflow filterUltraRareParentsVariantsHail {
         Array[File] annot_vcf_files
         File lcr_uri
         File ped_sex_qc
-        File meta_uri
-        File trio_uri
+        File? meta_uri
+        File? trio_uri
         File vcf_metrics_tsv_final
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        # String python_trio_sample_script
+        String python_trio_sample_script
         String filter_rare_parents_python_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wgs_ultra_rare_parents_variants_hail.py"
         String jvarkit_docker
         String hail_docker
         String sv_base_mini_docker
         String cohort_prefix
-        Boolean sort_after_merge=false
         Float AF_threshold=0.005
         Int AC_threshold=1
         Float csq_af_threshold=0.00001
@@ -46,7 +43,6 @@ workflow filterUltraRareParentsVariantsHail {
         Float qd_threshold_indel=4.0
         Float qd_threshold_snv=3.0
         Float mq_threshold=50
-        Int shards_per_chunk=10
         String genome_build='GRCh38'
 
         # for prioritizeCSQ
@@ -54,7 +50,7 @@ workflow filterUltraRareParentsVariantsHail {
         String sample_column='SAMPLE'
 
         # for downsampling
-        Boolean downsample=false  # optional, downsampling requires WGS de novo output-specific fields
+        Boolean downsample=true  # optional, downsampling requires WGS de novo output-specific fields
         Int chunk_size=100000
         Float snv_scale=1
         Float indel_scale=1
@@ -70,17 +66,18 @@ workflow filterUltraRareParentsVariantsHail {
         RuntimeAttr? runtime_attr_downsample
     }  
 
-    # if (!defined(meta_uri)) {
-    #     call makeTrioSampleFiles {
-    #         input:
-    #             python_trio_sample_script=python_trio_sample_script,
-    #             ped_sex_qc=ped_sex_qc,
-    #             cohort_prefix=cohort_prefix,
-    #             hail_docker=hail_docker
-    #     }        
-    # }
-    # File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
-    # File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
+    if (!defined(meta_uri)) {
+        call makeTrioSampleFiles {
+            input:
+                python_trio_sample_script=python_trio_sample_script,
+                ped_sex_qc=ped_sex_qc,
+                cohort_prefix=cohort_prefix,
+                hail_docker=hail_docker,
+
+        }        
+    }
+    File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
+    File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
 
     scatter (vcf_file in annot_vcf_files) {
         String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
@@ -89,8 +86,8 @@ workflow filterUltraRareParentsVariantsHail {
                 vcf_file=vcf_file,
                 lcr_uri=lcr_uri,
                 ped_sex_qc=ped_sex_qc,
-                meta_uri=meta_uri,
-                trio_uri=trio_uri,
+                meta_uri=meta_uri_,
+                trio_uri=trio_uri_,
                 filter_rare_parents_python_script=filter_rare_parents_python_script,
                 hail_docker=hail_docker,
                 cohort_prefix=basename(vcf_file, file_ext),
@@ -146,6 +143,7 @@ workflow filterUltraRareParentsVariantsHail {
                 chunk_size=chunk_size,
                 snv_scale=snv_scale,
                 indel_scale=indel_scale,
+                prioritize_coding=prioritize_coding,
                 prioritize_gnomad=prioritize_gnomad,
                 runtime_attr_downsample=runtime_attr_downsample
             }
@@ -164,6 +162,7 @@ workflow filterUltraRareParentsVariantsHail {
                 chunk_size=chunk_size,
                 snv_scale=snv_scale,
                 indel_scale=indel_scale,
+                prioritize_coding=prioritize_coding,
                 prioritize_gnomad=prioritize_gnomad,
                 runtime_attr_downsample=runtime_attr_downsample
             }

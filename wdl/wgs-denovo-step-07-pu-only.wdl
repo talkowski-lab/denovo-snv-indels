@@ -1,7 +1,6 @@
 version 1.0
 
 # assuming filterUltraRareInheritedVariantsHail and filterUltraRareParentsVariantsHail already run
-import  "flagRepetitiveRegions.wdl" as flagRepetitiveRegions
 import "wgs-denovo-bagging-pu-rf-len.wdl" as BaggingPU_RF
 import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
 import "filterUltraRareParentsVariantsHail.wdl" as filterUltraRareParentsVariantsHail 
@@ -20,15 +19,7 @@ workflow step7 {
     input {
         File downsampled_ultra_rare_inherited
         File downsampled_ultra_rare_parents
-        File lcr_uri
-        File ped_sex_qc
-        File meta_uri
-        File trio_uri
         File vcf_metrics_tsv_final
-        File hg38_reference
-        File hg38_reference_dict
-        File hg38_reference_fai
-        String jvarkit_docker
         String hail_docker
         String sv_base_mini_docker
         String cohort_prefix
@@ -44,7 +35,6 @@ workflow step7 {
         String bagging_pu_source_script
         String bagging_pu_rf_len_script
         String tsv_to_bed_script
-        String cohort_prefix
         String metric='fp_fn_ratio'
         Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
         Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]

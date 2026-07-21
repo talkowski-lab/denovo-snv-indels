@@ -1,6 +1,5 @@
 version 1.0
 
-import  "flagRepetitiveRegions.wdl" as flagRepetitiveRegions
 import "wgs-denovo-bagging-pu-rf-len.wdl" as BaggingPU_RF
 import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
 import "filterUltraRareParentsVariantsHail.wdl" as filterUltraRareParentsVariantsHail 
@@ -25,7 +24,7 @@ workflow step7 {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        File remove_regions_bed
+
         String prioritize_csq_script
         String filter_rare_inherited_python_script
         String filter_rare_parents_python_script
@@ -46,121 +45,227 @@ workflow step7 {
         Float qd_threshold_indel=4.0
         Float qd_threshold_snv=3.0
         Float mq_threshold=50
-        Int shards_per_chunk=10
 
         # for downsampling
+        Boolean downsample=true
         Int chunk_size=100000
         Float snv_scale=1
         Float indel_scale=1
         # Boolean prioritize_gnomad=false
 
+        Boolean remove_regions=false
+        File? remove_regions_bed  # unused if remove_regions=false
+
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_downsample
-    
+        RuntimeAttr? runtime_attr_prioritize
+
         File repetitive_regions_bed
         # String var_type  # Indel or SNV, only Indel for now
+        String python_trio_sample_script
         String bagging_pu_source_script
         String bagging_pu_rf_len_script
         String tsv_to_bed_script
-        String cohort_prefix
         String metric='fp_fn_ratio'
         Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
         Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
         Float vqslod_cutoff=-10
         Int n_estimators_rf=100
         Int n_bag=10
+        Int n_jobs=-1
         Boolean filter_pass_before=false
         RuntimeAttr? runtime_attr_bagging_pu
     }
 
-    call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
-        input:
-            annot_vcf_files=annot_vcf_files,
-            lcr_uri=lcr_uri,
-            ped_sex_qc=ped_sex_qc,
-            meta_uri=meta_uri,
-            trio_uri=trio_uri,
-            vcf_metrics_tsv_final=vcf_metrics_tsv_final,
-            hg38_reference=hg38_reference,
-            hg38_reference_dict=hg38_reference_dict,
-            hg38_reference_fai=hg38_reference_fai,
-            remove_regions_bed=remove_regions_bed,
-            prioritize_csq_script=prioritize_csq_script,
-            filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-            jvarkit_docker=jvarkit_docker,
-            hail_docker=hail_docker,
-            sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix,
-            AF_threshold=AF_threshold,
-            AC_threshold=AC_threshold,
-            csq_af_threshold=csq_af_threshold,
-            gq_het_threshold=gq_het_threshold,
-            gq_hom_ref_threshold=gq_hom_ref_threshold,
-            qual_threshold=qual_threshold,
-            sor_threshold_indel=sor_threshold_indel,
-            sor_threshold_snv=sor_threshold_snv,
-            readposranksum_threshold_indel=readposranksum_threshold_indel,
-            readposranksum_threshold_snv=readposranksum_threshold_snv,
-            qd_threshold_indel=qd_threshold_indel,
-            qd_threshold_snv=qd_threshold_snv,
-            mq_threshold=mq_threshold,
-            shards_per_chunk=shards_per_chunk,
-            chunk_size=chunk_size,
-            snv_scale=snv_scale,
-            indel_scale=indel_scale,
-            prioritize_gnomad=false,
-            runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-            runtime_attr_merge_results=runtime_attr_merge_results,
-            runtime_attr_downsample=runtime_attr_downsample
+    if (remove_regions) {
+        call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHailRemoveRegions {
+            input:
+                annot_vcf_files=annot_vcf_files,
+                lcr_uri=lcr_uri,
+                ped_sex_qc=ped_sex_qc,
+                meta_uri=meta_uri,
+                trio_uri=trio_uri,
+                vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+                hg38_reference=hg38_reference,
+                hg38_reference_dict=hg38_reference_dict,
+                hg38_reference_fai=hg38_reference_fai,
+                remove_regions=remove_regions,
+                remove_regions_bed=select_first([remove_regions_bed]),
+                python_trio_sample_script=python_trio_sample_script,
+                prioritize_csq_script=prioritize_csq_script,
+                filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+                jvarkit_docker=jvarkit_docker,
+                hail_docker=hail_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                AF_threshold=AF_threshold,
+                AC_threshold=AC_threshold,
+                csq_af_threshold=csq_af_threshold,
+                gq_het_threshold=gq_het_threshold,
+                gq_hom_ref_threshold=gq_hom_ref_threshold,
+                qual_threshold=qual_threshold,
+                sor_threshold_indel=sor_threshold_indel,
+                sor_threshold_snv=sor_threshold_snv,
+                readposranksum_threshold_indel=readposranksum_threshold_indel,
+                readposranksum_threshold_snv=readposranksum_threshold_snv,
+                qd_threshold_indel=qd_threshold_indel,
+                qd_threshold_snv=qd_threshold_snv,
+                mq_threshold=mq_threshold,
+                downsample=downsample,
+                chunk_size=chunk_size,
+                snv_scale=snv_scale,
+                indel_scale=indel_scale,
+                prioritize_gnomad=false,
+                runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+                runtime_attr_merge_results=runtime_attr_merge_results,
+                runtime_attr_downsample=runtime_attr_downsample,
+                runtime_attr_prioritize=runtime_attr_prioritize
+        }
+
+        call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHailRemoveRegions {
+            input:
+                annot_vcf_files=annot_vcf_files,
+                lcr_uri=lcr_uri,
+                ped_sex_qc=ped_sex_qc,
+                meta_uri=meta_uri,
+                trio_uri=trio_uri,
+                vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+                hg38_reference=hg38_reference,
+                hg38_reference_dict=hg38_reference_dict,
+                hg38_reference_fai=hg38_reference_fai,
+                remove_regions=remove_regions,
+                remove_regions_bed=select_first([remove_regions_bed]),
+                python_trio_sample_script=python_trio_sample_script,
+                prioritize_csq_script=prioritize_csq_script,
+                filter_rare_parents_python_script=filter_rare_parents_python_script,
+                jvarkit_docker=jvarkit_docker,
+                hail_docker=hail_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                AF_threshold=AF_threshold,
+                AC_threshold=AC_threshold,
+                csq_af_threshold=csq_af_threshold,
+                gq_het_threshold=gq_het_threshold,
+                gq_hom_ref_threshold=gq_hom_ref_threshold,
+                qual_threshold=qual_threshold,
+                sor_threshold_indel=sor_threshold_indel,
+                sor_threshold_snv=sor_threshold_snv,
+                readposranksum_threshold_indel=readposranksum_threshold_indel,
+                readposranksum_threshold_snv=readposranksum_threshold_snv,
+                qd_threshold_indel=qd_threshold_indel,
+                qd_threshold_snv=qd_threshold_snv,
+                mq_threshold=mq_threshold,
+                downsample=downsample,
+                chunk_size=chunk_size,
+                snv_scale=snv_scale,
+                indel_scale=indel_scale,
+                prioritize_gnomad=true,
+                runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+                runtime_attr_merge_results=runtime_attr_merge_results,
+                runtime_attr_downsample=runtime_attr_downsample,
+                runtime_attr_prioritize=runtime_attr_prioritize
+        }
     }
 
-    call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
-        input:
-            annot_vcf_files=annot_vcf_files,
-            lcr_uri=lcr_uri,
-            ped_sex_qc=ped_sex_qc,
-            meta_uri=meta_uri,
-            trio_uri=trio_uri,
-            vcf_metrics_tsv_final=vcf_metrics_tsv_final,
-            hg38_reference=hg38_reference,
-            hg38_reference_dict=hg38_reference_dict,
-            hg38_reference_fai=hg38_reference_fai,
-            remove_regions_bed=remove_regions_bed,
-            prioritize_csq_script=prioritize_csq_script,
-            filter_rare_parents_python_script=filter_rare_parents_python_script,
-            jvarkit_docker=jvarkit_docker,
-            hail_docker=hail_docker,
-            sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix,
-            AF_threshold=AF_threshold,
-            AC_threshold=AC_threshold,
-            csq_af_threshold=csq_af_threshold,
-            gq_het_threshold=gq_het_threshold,
-            gq_hom_ref_threshold=gq_hom_ref_threshold,
-            qual_threshold=qual_threshold,
-            sor_threshold_indel=sor_threshold_indel,
-            sor_threshold_snv=sor_threshold_snv,
-            readposranksum_threshold_indel=readposranksum_threshold_indel,
-            readposranksum_threshold_snv=readposranksum_threshold_snv,
-            qd_threshold_indel=qd_threshold_indel,
-            qd_threshold_snv=qd_threshold_snv,
-            mq_threshold=mq_threshold,
-            shards_per_chunk=shards_per_chunk,
-            chunk_size=chunk_size,
-            snv_scale=snv_scale,
-            indel_scale=indel_scale,
-            prioritize_gnomad=true,
-            runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-            runtime_attr_merge_results=runtime_attr_merge_results,
-            runtime_attr_downsample=runtime_attr_downsample
+    if (!remove_regions) {
+        call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
+            input:
+                annot_vcf_files=annot_vcf_files,
+                lcr_uri=lcr_uri,
+                ped_sex_qc=ped_sex_qc,
+                meta_uri=meta_uri,
+                trio_uri=trio_uri,
+                vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+                hg38_reference=hg38_reference,
+                hg38_reference_dict=hg38_reference_dict,
+                hg38_reference_fai=hg38_reference_fai,
+                remove_regions=remove_regions,
+                python_trio_sample_script=python_trio_sample_script,
+                prioritize_csq_script=prioritize_csq_script,
+                filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+                jvarkit_docker=jvarkit_docker,
+                hail_docker=hail_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                AF_threshold=AF_threshold,
+                AC_threshold=AC_threshold,
+                csq_af_threshold=csq_af_threshold,
+                gq_het_threshold=gq_het_threshold,
+                gq_hom_ref_threshold=gq_hom_ref_threshold,
+                qual_threshold=qual_threshold,
+                sor_threshold_indel=sor_threshold_indel,
+                sor_threshold_snv=sor_threshold_snv,
+                readposranksum_threshold_indel=readposranksum_threshold_indel,
+                readposranksum_threshold_snv=readposranksum_threshold_snv,
+                qd_threshold_indel=qd_threshold_indel,
+                qd_threshold_snv=qd_threshold_snv,
+                mq_threshold=mq_threshold,
+                downsample=downsample,
+                chunk_size=chunk_size,
+                snv_scale=snv_scale,
+                indel_scale=indel_scale,
+                prioritize_gnomad=false,
+                runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+                runtime_attr_merge_results=runtime_attr_merge_results,
+                runtime_attr_downsample=runtime_attr_downsample,
+                runtime_attr_prioritize=runtime_attr_prioritize
+        }
+
+        call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
+            input:
+                annot_vcf_files=annot_vcf_files,
+                lcr_uri=lcr_uri,
+                ped_sex_qc=ped_sex_qc,
+                meta_uri=meta_uri,
+                trio_uri=trio_uri,
+                vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+                hg38_reference=hg38_reference,
+                hg38_reference_dict=hg38_reference_dict,
+                hg38_reference_fai=hg38_reference_fai,
+                remove_regions=remove_regions,
+                python_trio_sample_script=python_trio_sample_script,
+                prioritize_csq_script=prioritize_csq_script,
+                filter_rare_parents_python_script=filter_rare_parents_python_script,
+                jvarkit_docker=jvarkit_docker,
+                hail_docker=hail_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                AF_threshold=AF_threshold,
+                AC_threshold=AC_threshold,
+                csq_af_threshold=csq_af_threshold,
+                gq_het_threshold=gq_het_threshold,
+                gq_hom_ref_threshold=gq_hom_ref_threshold,
+                qual_threshold=qual_threshold,
+                sor_threshold_indel=sor_threshold_indel,
+                sor_threshold_snv=sor_threshold_snv,
+                readposranksum_threshold_indel=readposranksum_threshold_indel,
+                readposranksum_threshold_snv=readposranksum_threshold_snv,
+                qd_threshold_indel=qd_threshold_indel,
+                qd_threshold_snv=qd_threshold_snv,
+                mq_threshold=mq_threshold,
+                downsample=downsample,
+                chunk_size=chunk_size,
+                snv_scale=snv_scale,
+                indel_scale=indel_scale,
+                prioritize_gnomad=true,
+                runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+                runtime_attr_merge_results=runtime_attr_merge_results,
+                runtime_attr_downsample=runtime_attr_downsample,
+                runtime_attr_prioritize=runtime_attr_prioritize
+        }
     }
 
+    File downsampled_ultra_rare_parents_Indel_ = select_first([filterUltraRareParentsVariantsHailRemoveRegions.downsampled_ultra_rare_parents_Indel, filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_Indel])
+    File downsampled_ultra_rare_parents_SNV_ = select_first([filterUltraRareParentsVariantsHailRemoveRegions.downsampled_ultra_rare_parents_SNV, filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_SNV])
+    File downsampled_ultra_rare_inherited_Indel_ = select_first([filterUltraRareInheritedVariantsHailRemoveRegions.downsampled_ultra_rare_inherited_Indel, filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_Indel])
+    File downsampled_ultra_rare_inherited_SNV_ = select_first([filterUltraRareInheritedVariantsHailRemoveRegions.downsampled_ultra_rare_inherited_SNV, filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_SNV])
+    
     call BaggingPU_RF.BaggingPU_RF as BaggingPU_RF {
         input:
         vcf_metrics_tsv_final=vcf_metrics_tsv_final,
-        ultra_rare_inherited_tsv=filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_Indel,
-        ultra_rare_parents_tsv=filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_Indel,
+        ultra_rare_inherited_tsv=downsampled_ultra_rare_inherited_Indel_,
+        ultra_rare_parents_tsv=downsampled_ultra_rare_parents_Indel_,
         repetitive_regions_bed=repetitive_regions_bed,
         var_type='Indel',  # Indel or SNV, only Indel for now
         bagging_pu_source_script=bagging_pu_source_script,
@@ -175,19 +280,21 @@ workflow step7 {
         vqslod_cutoff=vqslod_cutoff,
         n_estimators_rf=n_estimators_rf,
         n_bag=n_bag,
+        n_jobs=n_jobs,
         filter_pass_before=filter_pass_before,
         runtime_attr_bagging_pu=runtime_attr_bagging_pu
     }
     
     output {
-        File ultra_rare_inherited_tsv = filterUltraRareInheritedVariantsHail.ultra_rare_inherited_tsv
-        File downsampled_ultra_rare_inherited_SNV = filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_SNV
-        File downsampled_ultra_rare_inherited_Indel = filterUltraRareInheritedVariantsHail.downsampled_ultra_rare_inherited_Indel
+        File ultra_rare_inherited_tsv = select_first([filterUltraRareInheritedVariantsHailRemoveRegions.ultra_rare_inherited_tsv, filterUltraRareInheritedVariantsHail.ultra_rare_inherited_tsv])
+        File downsampled_ultra_rare_inherited_SNV = downsampled_ultra_rare_inherited_SNV_
+        File downsampled_ultra_rare_inherited_Indel = downsampled_ultra_rare_inherited_Indel_
 
-        File ultra_rare_parents_tsv = filterUltraRareParentsVariantsHail.ultra_rare_parents_tsv
-        File downsampled_ultra_rare_parents_SNV = filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_SNV
-        File downsampled_ultra_rare_parents_Indel = filterUltraRareParentsVariantsHail.downsampled_ultra_rare_parents_Indel
+        File ultra_rare_parents_tsv = select_first([filterUltraRareParentsVariantsHailRemoveRegions.ultra_rare_parents_tsv, filterUltraRareParentsVariantsHail.ultra_rare_parents_tsv])
+        File downsampled_ultra_rare_parents_SNV = downsampled_ultra_rare_parents_SNV_
+        File downsampled_ultra_rare_parents_Indel = downsampled_ultra_rare_parents_Indel_
         
         File vcf_metrics_tsv_final_pu = BaggingPU_RF.vcf_metrics_tsv_final_pu
+        File pu_feature_importances_plot = BaggingPU_RF.pu_feature_importances_plot
     }
 }

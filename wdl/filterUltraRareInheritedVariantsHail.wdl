@@ -1,7 +1,5 @@
 version 1.0
 
-import "mergeSplitVCF.wdl" as mergeSplitVCF
-import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/mergeVCFs.wdl" as mergeVCFs
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
 import "downsampleVariantsfromTSV.wdl" as downsampleVariantsfromTSV
 import "prioritizeCSQ.wdl" as prioritizeCSQ
@@ -45,7 +43,6 @@ workflow filterUltraRareInheritedVariantsHail {
         Float qd_threshold_indel=4.0
         Float qd_threshold_snv=3.0
         Float mq_threshold=50
-        Int shards_per_chunk=10
         String genome_build='GRCh38'
 
         # for prioritizeCSQ
@@ -53,7 +50,7 @@ workflow filterUltraRareInheritedVariantsHail {
         String sample_column='SAMPLE'
 
         #for downsampling
-        Boolean downsample=false  # optional, downsampling requires WGS de novo output-specific fields
+        Boolean downsample=true  # optional, downsampling requires WGS de novo output-specific fields
         Int chunk_size=100000
         Float snv_scale=1
         Float indel_scale=1
