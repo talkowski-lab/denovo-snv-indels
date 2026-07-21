@@ -38,6 +38,7 @@ workflow step1 {
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
         RuntimeAttr? runtime_attr_preprocess
+        RuntimeAttr? runtime_attr_merge_split_vcf
         RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_merge_chunks
         RuntimeAttr? runtime_attr_merge_unchunked
@@ -57,7 +58,8 @@ workflow step1 {
                 file=write_lines(annot_vcf_files),
                 shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_merge_split_vcf
         }
         scatter (chunk_file in splitVEPFiles.chunks) {        
             call mergeVCFs.mergeVCFs as mergeChunk {
