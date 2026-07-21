@@ -175,7 +175,6 @@ workflow wgs_denovo_full {
 
     call step3.step3 as step3 {
         input:
-            trio_uri=trio_uri,
             ped_sex_qc=ped_sex_qc,
             merged_preprocessed_vcf_file_filtered=step2.merged_preprocessed_vcf_file_filtered,
             hail_docker=hail_docker,
@@ -184,7 +183,6 @@ workflow wgs_denovo_full {
             # uberSplit_v3_script=uberSplit_v3_script,
             batch_size=batch_size,
             # subset_ped_script=subset_ped_script,
-            annot_vcf_files=annot_vcf_files,
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
