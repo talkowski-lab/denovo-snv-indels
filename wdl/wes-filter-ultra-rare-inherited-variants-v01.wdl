@@ -109,10 +109,14 @@ workflow filterUltraRareInheritedVariants {
                 mt_uri=vcf_file,
                 hail_docker=hail_docker
         }
+
+        String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
+        
         call step1.hailAnnotateRemote as step1 {
             input:
                 mt_uri=vcf_file,
                 input_size=getInputMTSize.mt_size,
+                prefix=basename(vcf_file, file_ext),
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
                 hail_annotation_script=hail_annotation_script,
