@@ -115,7 +115,6 @@ workflow filterUltraRareInheritedVariants {
                 input_size=getInputMTSize.mt_size,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
                 genome_build=genome_build,
                 hail_docker=hail_docker
@@ -136,7 +135,7 @@ workflow filterUltraRareInheritedVariants {
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=ped_sex_qc,
                     bucket_id=bucket_id,
-                    cohort_prefix=cohort_prefix,
+                    prefix=basename(step1.annot_mt, '.mt')+'.controls',
                     hail_basic_filtering_script=hail_basic_filtering_script,
                     call_rate_threshold=call_rate_threshold,
                     genome_build=genome_build,
@@ -213,7 +212,7 @@ workflow filterUltraRareInheritedVariants {
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=ped_sex_qc,
                     bucket_id=bucket_id,
-                    cohort_prefix=cohort_prefix,
+                    prefix=basename(step1.annot_mt, '.mt')+'.trio_cases',
                     hail_basic_filtering_script=hail_basic_filtering_script,
                     call_rate_threshold=call_rate_threshold,
                     genome_build=genome_build,
@@ -290,7 +289,7 @@ workflow filterUltraRareInheritedVariants {
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=ped_sex_qc,
                     bucket_id=bucket_id,
-                    cohort_prefix=cohort_prefix,
+                    prefix=basename(step1.annot_mt, '.mt')+'.non_trio_cases',
                     hail_basic_filtering_script=hail_basic_filtering_script,
                     call_rate_threshold=call_rate_threshold,
                     genome_build=genome_build,
@@ -359,81 +358,6 @@ workflow filterUltraRareInheritedVariants {
             }
         }
 
-        # call step2.hailBasicFilteringRemote as step2NontrioCases {
-        #     input:
-        #         lcr_uri=lcr_uri,
-        #         annot_mt=step1.annot_mt,
-        #         input_size=getStep1MTSize.mt_size,
-        #         ped_sex_qc=ped_sex_qc,
-        #         bucket_id=bucket_id,
-        #         cohort_prefix=cohort_prefix,
-        #         hail_basic_filtering_script=hail_basic_filtering_script,
-        #         call_rate_threshold=call_rate_threshold,
-        #         genome_build=genome_build,
-        #         hail_docker=hail_docker,
-        #         # Hardcoded filters
-        #         min_dp=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.min_dp,
-        #                 qc_filters_default.min_dp
-        #             ]
-        #         ),
-        #         max_dp=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.max_dp,
-        #                 qc_filters_default.max_dp
-        #             ]
-        #         ),
-        #         min_gq=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.min_gq,
-        #                 qc_filters_default.min_gq
-        #             ]
-        #         ),
-        #         min_pl=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.min_pl,
-        #                 qc_filters_default.min_pl
-        #             ]
-        #         ),
-        #         female_min_dp=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.female_min_dp,
-        #                 qc_filters_default.female_min_dp
-        #             ]
-        #         ),
-        #         male_auto_min_dp=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.male_auto_min_dp,
-        #                 qc_filters_default.male_auto_min_dp
-        #             ]
-        #         ),
-        #         het_ab_threshold=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.het_ab_threshold,
-        #                 qc_filters_default.het_ab_threshold
-        #             ]
-        #         ),
-        #         het_pab_threshold=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.het_pab_threshold,
-        #                 qc_filters_default.het_pab_threshold
-        #             ]
-        #         ),
-        #         informative_read_threshold=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.informative_read_threshold,
-        #                 qc_filters_default.informative_read_threshold
-        #             ]
-        #         ),
-        #         phwe_threshold=select_first(
-        #             [
-        #                 nontrio_case_qc_filters_override.phwe_threshold,
-        #                 qc_filters_default.phwe_threshold
-        #             ]
-        #         )
-        # }
-
         # Merge all MTs together before running inherited filtering
         call helpers.mergeMTs as mergeStep2SubsetMTs {
             input: 
@@ -456,22 +380,13 @@ workflow filterUltraRareInheritedVariants {
                 mt_uri=mergeStep2SubsetMTs.merged_mt,
                 hail_docker=hail_docker
         }
-
-        # call helpers.getHailMTSize as getStep2MTSize {
-        #     input:
-        #         mt_uri=step2NontrioCases.filtered_mt,
-        #         hail_docker=hail_docker
-        # }
     
         call hailUltraRareInheritedFilteringRemote {
             input:
-                # filtered_mt=step2NontrioCases.filtered_mt,
-                # input_size=getStep2MTSize.mt_size,
                 filtered_mt=mergeStep2SubsetMTs.merged_mt,
                 input_size=getStep2MergedMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 vep_vcf_file=vcf_file,  # Fixed reference to current scattered file
-                cohort_prefix=cohort_prefix,
                 hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
                 hail_docker=hail_docker,
                 gnomad_af_field=gnomad_af_field,
@@ -525,7 +440,6 @@ task hailUltraRareInheritedFilteringRemote {
         File vep_vcf_file
         Float input_size
         String filtered_mt
-        String cohort_prefix
         String hail_ultra_rare_inherited_filtering_script
         String hail_docker
         String gnomad_af_field
