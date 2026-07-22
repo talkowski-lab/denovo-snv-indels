@@ -30,7 +30,6 @@ workflow filterUltraRareInheritedVariants {
     input {
         # step1
         Array[File] vep_vcf_files
-        String mpc_ht_uri
         String gnomad_ht_uri
         String hail_annotation_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wes_denovo_annotation.py"
         
@@ -114,8 +113,6 @@ workflow filterUltraRareInheritedVariants {
             input:
                 mt_uri=vcf_file,
                 input_size=getInputMTSize.mt_size,
-                ped_sex_qc=ped_sex_qc,
-                mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
@@ -633,12 +630,12 @@ task subsetTrioCaseControlPed {
     command <<<
         awk -F'\t' '(NR == 1) || ($6 == 1)' ~{ped} > ~{cohort_prefix}.controls.ped
 
-        awk -F'\t' 'NR == FNR {nas[$1]; next} (FNR == 1) || (($6 == 2) && (($3 in nas) || ($4 in nas)))'
-            <(echo -e ~{sep='\n' na_vals}) ~{ped}
+        awk -F'\t' 'NR == FNR {nas[$1]; next} (FNR == 1) || (($6 == 2) && (($3 in nas) || ($4 in nas)))' \
+            <(echo -e ~{sep='\n' na_vals}) ~{ped} \
             > ~{cohort_prefix}.nontrio_cases.ped
 
-        awk -F'\t' 'NR == FNR {nas[$1]; next} (FNR == 1) || (($6 == 2) && !($3 in nas) && !($4 in nas))'
-            <(echo -e ~{sep='\n' na_vals}) ~{ped}
+        awk -F'\t' 'NR == FNR {nas[$1]; next} (FNR == 1) || (($6 == 2) && !($3 in nas) && !($4 in nas))' \
+            <(echo -e ~{sep='\n' na_vals}) ~{ped} \
             > ~{cohort_prefix}.trio_cases.ped
     >>>
 
