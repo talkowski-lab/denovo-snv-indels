@@ -36,7 +36,6 @@ workflow wgs_denovo_full {
         String hail_docker
         String jvarkit_docker
         String sample_column
-        Int batch_size=10
 
         # Note: only scripts that are shared between steps/tasks are input at the top-level
         # All other scripts and runtime_attr inputs are added at the sub-workflow/task level
@@ -100,7 +99,6 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             trio_denovo_docker=trio_denovo_docker,
-            batch_size=batch_size,
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
