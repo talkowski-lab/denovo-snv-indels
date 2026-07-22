@@ -15,7 +15,6 @@ workflow step1 {
     input {
         Array[String] mt_uris
         String gnomad_ht_uri
-        String cohort_prefix
         String hail_annotation_script
         String hail_docker
         String bucket_id
@@ -29,13 +28,21 @@ workflow step1 {
                 mt_uri=mt_uri,
                 hail_docker=hail_docker
         }
+        
+        # Find file extension/type of mt_uri (VCF or MT)
+        String base_name = basename(mt_uri)
+        String file_ext = if sub(base_name, "\\.mt$", "") != base_name then ".mt"
+                        else if sub(base_name, "\\.vcf\\.gz$", "") != base_name then ".vcf.gz"
+                        else if sub(base_name, "\\.vcf\\.bgz$", "") != base_name then ".vcf.bgz"
+                        else ".unknown"
+
         call hailAnnotateRemote {
             input:
                 mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
                 gnomad_ht_uri=gnomad_ht_uri,
+                prefix=basename(mt_uri, file_ext),
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
@@ -54,8 +61,8 @@ task hailAnnotateRemote {
         Float input_size
         String mt_uri
         String bucket_id
+        String prefix
         String gnomad_ht_uri
-        String cohort_prefix
         String hail_annotation_script
         String hail_docker
         String genome_build
@@ -92,7 +99,7 @@ task hailAnnotateRemote {
         curl ~{hail_annotation_script} > hail_annotation_script.py
         python3 hail_annotation_script.py \
             --mt-uri ~{mt_uri} \
-            --cohort-prefix ~{cohort_prefix} \
+            --prefix ~{prefix} \
             --gnomad-ht-uri ~{gnomad_ht_uri} \
             --cores ~{cpu_cores} \
             --mem ~{memory} \

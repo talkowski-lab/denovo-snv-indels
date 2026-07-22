@@ -46,7 +46,6 @@ workflow hailDenovoWES {
                 input_size=getInputMTSize.mt_size,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 genome_build=genome_build,
                 hail_docker=hail_docker
         }
@@ -63,7 +62,6 @@ workflow hailDenovoWES {
                 input_size=getStep1MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 genome_build=genome_build,
                 hail_docker=hail_docker
         }
@@ -80,7 +78,6 @@ workflow hailDenovoWES {
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,
                 hail_docker=hail_docker
         }

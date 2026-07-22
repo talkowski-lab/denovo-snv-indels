@@ -17,7 +17,6 @@ workflow step3 {
         File ped_sex_qc
         File loeuf_file
         String bucket_id
-        String cohort_prefix
         String hail_denovo_filtering_script
         String hail_docker
         Float max_parent_ab=0.05
@@ -40,7 +39,7 @@ workflow step3 {
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
+                prefix=basename(mt_uri, "_wes_denovo_basic_filtering.mt"),
                 loeuf_file=loeuf_file,
                 hail_denovo_filtering_script=hail_denovo_filtering_script,
                 hail_docker=hail_docker,
@@ -69,7 +68,7 @@ task hailDenovoFilteringRemote {
         Float input_size
         String filtered_mt
         String bucket_id
-        String cohort_prefix
+        String prefix
         String loeuf_file
         String hail_denovo_filtering_script
         String hail_docker
@@ -111,7 +110,7 @@ task hailDenovoFilteringRemote {
         curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
         python3 hail_denovo_filtering_script.py \
             --filtered-mt ~{filtered_mt} \
-            --cohort-prefix ~{cohort_prefix} \
+            --prefix ~{prefix} \
             --ped-uri ~{ped_sex_qc} \
             --loeuf-file ~{loeuf_file} \
             --cores ~{cpu_cores} \
@@ -124,7 +123,6 @@ task hailDenovoFilteringRemote {
             --min-p ~{min_p} > stdout
     }
 
-    String prefix = basename(filtered_mt, "_wes_denovo_basic_filtering.mt")
     output {
         File de_novo_results = "~{prefix}_wes_final_denovo.txt"
         File de_novo_vep = "~{prefix}_wes_final_denovo_vep.txt"

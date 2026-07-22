@@ -9,7 +9,7 @@ import os
 
 parser = argparse.ArgumentParser(description="WES de novo filtering")
 parser.add_argument("--filtered-mt", required=True)
-parser.add_argument("--cohort-prefix", required=True)
+parser.add_argument("--prefix", required=True)
 parser.add_argument("--ped-uri", required=True)
 parser.add_argument("--loeuf-file", required=True)
 parser.add_argument("--cores", required=True)
@@ -24,7 +24,7 @@ parser.add_argument("--min-p", type=float, required=True)
 args = parser.parse_args()
 
 filtered_mt = args.filtered_mt
-cohort_prefix = args.cohort_prefix
+prefix = args.prefix
 ped_uri = args.ped_uri
 loeuf_file = args.loeuf_file
 cores = args.cores
@@ -36,7 +36,7 @@ min_dp_ratio = args.min_dp_ratio
 min_gq = args.min_gq
 min_p = args.min_p
 
-prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
+# prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",

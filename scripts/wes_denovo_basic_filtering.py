@@ -17,7 +17,7 @@ import os
 
 parser = argparse.ArgumentParser(description="Basic filtering for WES de novo calling")
 parser.add_argument("--annot-mt", required=True, help="Input MatrixTable")
-parser.add_argument("--cohort-prefix", required=True)
+parser.add_argument("--prefix", required=True)
 parser.add_argument("--ped-uri", required=True)
 parser.add_argument("--cores", default="8")
 parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
@@ -41,7 +41,7 @@ parser.add_argument("--phwe-threshold", type=float, default=0.000000000001)
 args = parser.parse_args()
 
 annot_mt = args.annot_mt
-cohort_prefix = args.cohort_prefix
+prefix = args.prefix
 ped_uri = args.ped_uri
 cores = args.cores
 mem = args.mem
@@ -60,7 +60,7 @@ het_pab_threshold = args.het_pab_threshold
 informative_read_threshold = args.informative_read_threshold
 phwe_threshold = args.phwe_threshold
 
-prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
+# prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",

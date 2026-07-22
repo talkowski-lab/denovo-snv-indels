@@ -16,7 +16,6 @@ workflow step2 {
         File ped_sex_qc
         File lcr_uri
         Array[String] annot_mt
-        String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
         String bucket_id
@@ -50,8 +49,8 @@ workflow step2 {
                 annot_mt=mt_uri,
                 input_size=select_first([getHailMTSize.mt_size]),
                 ped_sex_qc=ped_sex_qc,
+                prefix=basename(mt_uri, "_wes_denovo_annot.mt"),
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
@@ -86,8 +85,8 @@ task hailBasicFilteringRemote {
         Float input_size
         Float call_rate_threshold
         String annot_mt
+        String prefix
         String bucket_id
-        String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
         String genome_build
@@ -138,7 +137,7 @@ task hailBasicFilteringRemote {
         
         python3 hail_basic_filtering_script.py \
             --annot-mt ~{annot_mt} \
-            --cohort-prefix ~{cohort_prefix} \
+            --prefix ~{prefix} \
             --ped-uri ~{ped_sex_qc} \
             --cores ~{cpu_cores} \
             --mem ~{memory} \
@@ -158,7 +157,6 @@ task hailBasicFilteringRemote {
             --phwe-threshold ~{phwe_threshold}
     }
 
-    String prefix = basename(annot_mt, "_wes_denovo_annot.mt")
     output {
         String filtered_mt = read_lines("mt_uri.txt")[0]
         File post_filter_sample_qc_info = "~{prefix}_wes_final_annot_post_filter_qc_info.txt"

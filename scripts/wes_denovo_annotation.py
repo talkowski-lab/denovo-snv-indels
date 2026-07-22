@@ -21,7 +21,7 @@ import os
 
 parser = argparse.ArgumentParser(description="WES de novo annotation")
 parser.add_argument("--mt-uri", required=True, help="Input MatrixTable or VCF")
-parser.add_argument("--cohort-prefix", required=True)
+parser.add_argument("--prefix", required=True)
 parser.add_argument("--gnomad-ht-uri", required=True)
 parser.add_argument("--cores", required=True)
 parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
@@ -31,7 +31,7 @@ parser.add_argument("--genome-build", required=True)
 args = parser.parse_args()
 
 file = args.mt_uri
-cohort_prefix = args.cohort_prefix
+prefix = args.prefix
 gnomad_ht_uri = args.gnomad_ht_uri
 cores = args.cores
 mem = int(np.floor(args.mem))
@@ -46,10 +46,10 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 
 if file.split('.')[-1] == 'mt':
     mt = hl.read_matrix_table(file)
-    prefix = os.path.basename(file).split('.mt')[0]
+    # prefix = os.path.basename(file).split('.mt')[0]
 else:
     mt = hl.import_vcf(file, reference_genome = genome_build, array_elements_required=False, call_fields=[], force_bgz=True)
-    prefix = os.path.basename(file).split('.vcf')[0]
+    # prefix = os.path.basename(file).split('.vcf')[0]
 
 # Step 1: Annotations
 
