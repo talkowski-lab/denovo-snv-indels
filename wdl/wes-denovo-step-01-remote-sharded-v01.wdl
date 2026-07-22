@@ -14,8 +14,6 @@ struct RuntimeAttr {
 workflow step1 {
     input {
         Array[String] mt_uris
-        File ped_sex_qc
-        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -35,8 +33,6 @@ workflow step1 {
             input:
                 mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
-                ped_sex_qc=ped_sex_qc,
-                mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
@@ -55,11 +51,9 @@ workflow step1 {
 
 task hailAnnotateRemote {
     input {
-        File ped_sex_qc
         Float input_size
         String mt_uri
         String bucket_id
-        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -96,9 +90,14 @@ task hailAnnotateRemote {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py ~{mt_uri} ~{cohort_prefix} ~{ped_sex_qc} \
-        ~{gnomad_ht_uri} ~{mpc_ht_uri} ~{cpu_cores} ~{memory} \
-        ~{bucket_id} ~{genome_build}
+        python3 hail_annotation_script.py \
+            --mt-uri ~{mt_uri} \
+            --cohort-prefix ~{cohort_prefix} \
+            --gnomad-ht-uri ~{gnomad_ht_uri} \
+            --cores ~{cpu_cores} \
+            --mem ~{memory} \
+            --bucket-id ~{bucket_id} \
+            --genome-build ~{genome_build}
     }
 
     output {

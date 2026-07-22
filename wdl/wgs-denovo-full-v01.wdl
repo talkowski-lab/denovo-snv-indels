@@ -155,7 +155,8 @@ workflow wgs_denovo_full {
             qd_threshold_snv=qd_threshold_snv,
             mq_threshold=mq_threshold,
             prioritize_gnomad=false,
-            prioritize_csq_script=prioritize_csq_script
+            prioritize_csq_script=prioritize_csq_script,
+            genome_build=genome_build
     }
 
     call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
@@ -181,7 +182,8 @@ workflow wgs_denovo_full {
             qd_threshold_snv=qd_threshold_snv,
             mq_threshold=mq_threshold,
             prioritize_gnomad=true,
-            prioritize_csq_script=prioritize_csq_script
+            prioritize_csq_script=prioritize_csq_script,
+            genome_build=genome_build
     }
 
     call step7.step7 as step7 {

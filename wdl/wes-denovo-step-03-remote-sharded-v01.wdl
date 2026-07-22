@@ -20,7 +20,6 @@ workflow step3 {
         String cohort_prefix
         String hail_denovo_filtering_script
         String hail_docker
-        String sv_base_mini_docker
         Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
@@ -110,8 +109,19 @@ task hailDenovoFilteringRemote {
 
     command {
         curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
-        python3 hail_denovo_filtering_script.py ~{filtered_mt} ~{cohort_prefix} ~{ped_sex_qc} ~{loeuf_file} \
-        ~{cpu_cores} ~{memory} ~{bucket_id} ~{max_parent_ab} ~{min_child_ab} ~{min_dp_ratio} ~{min_gq} ~{min_p} > stdout
+        python3 hail_denovo_filtering_script.py \
+            --filtered-mt ~{filtered_mt} \
+            --cohort-prefix ~{cohort_prefix} \
+            --ped-uri ~{ped_sex_qc} \
+            --loeuf-file ~{loeuf_file} \
+            --cores ~{cpu_cores} \
+            --mem ~{memory} \
+            --bucket-id ~{bucket_id} \
+            --max-parent-ab ~{max_parent_ab} \
+            --min-child-ab ~{min_child_ab} \
+            --min-dp-ratio ~{min_dp_ratio} \
+            --min-gq ~{min_gq} \
+            --min-p ~{min_p} > stdout
     }
 
     String prefix = basename(filtered_mt, "_wes_denovo_basic_filtering.mt")

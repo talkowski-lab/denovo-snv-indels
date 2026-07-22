@@ -3,6 +3,9 @@
 
 ## CHANGE LOG:
 '''
+7/22/2026:
+- switched from positional sys.argv to argparse with hyphenated flags
+
 3/20/2025:
 - commented out MPC annotation (done upstream in vep-annotate-hail-extra-{version})
 '''
@@ -12,19 +15,28 @@ import datetime
 import pandas as pd
 import hail as hl
 import numpy as np
-import sys
+import argparse
 import ast
 import os
 
-file = sys.argv[1]
-cohort_prefix = sys.argv[2]
-ped_uri = sys.argv[3]
-gnomad_ht_uri = sys.argv[4]
-mpc_ht_uri = sys.argv[5]
-cores = sys.argv[6]
-mem = int(np.floor(float(sys.argv[7])))
-bucket_id = sys.argv[8]
-genome_build = sys.argv[9]
+parser = argparse.ArgumentParser(description="WES de novo annotation")
+parser.add_argument("--mt-uri", required=True, help="Input MatrixTable or VCF")
+parser.add_argument("--cohort-prefix", required=True)
+parser.add_argument("--gnomad-ht-uri", required=True)
+parser.add_argument("--cores", required=True)
+parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
+parser.add_argument("--bucket-id", required=True)
+parser.add_argument("--genome-build", required=True)
+
+args = parser.parse_args()
+
+file = args.mt_uri
+cohort_prefix = args.cohort_prefix
+gnomad_ht_uri = args.gnomad_ht_uri
+cores = args.cores
+mem = int(np.floor(args.mem))
+bucket_id = args.bucket_id
+genome_build = args.genome_build
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",

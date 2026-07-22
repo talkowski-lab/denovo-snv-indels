@@ -19,11 +19,11 @@ workflow step4 {
         Array[File] de_novo_results_sharded 
         Array[File] de_novo_vep_sharded 
         File vep_vcf_file
-        String sample_column
         String cohort_prefix
         String prioritize_csq_script
         String hail_docker
         String genome_build
+        String sample_column = 'proband.s'
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_prioritize
     }

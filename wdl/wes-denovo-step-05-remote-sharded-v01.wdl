@@ -99,8 +99,16 @@ task finalFiltering {
 
     command <<<
     curl ~{final_filtering_script} > final_filtering.py
-    python3 final_filtering.py ~{de_novo_merged} ~{cohort_prefix} ~{vqslod_cutoff_snv} ~{vqslod_cutoff_indel} \
-        ~{af_threshold} ~{AD_alt_threshold} ~{cpu_cores} ~{memory} ~{single_variant} > stdout
+    python3 final_filtering.py \
+        --de-novo-merged ~{de_novo_merged} \
+        --cohort-prefix ~{cohort_prefix} \
+        --vqslod-cutoff-snv ~{vqslod_cutoff_snv} \
+        --vqslod-cutoff-indel ~{vqslod_cutoff_indel} \
+        --af-threshold ~{af_threshold} \
+        --ad-alt-threshold ~{AD_alt_threshold} \
+        --cores ~{cpu_cores} \
+        --mem ~{memory} \
+        --single-variant ~{single_variant} > stdout
     >>>
 
     output {
@@ -151,15 +159,25 @@ task annotateEvalRegions {
     import pandas as pd
     import hail as hl
     import numpy as np
-    import sys
+    import argparse
     import os
 
-    de_novo_final = sys.argv[1]
-    eval_regions = sys.argv[2]
-    cores = sys.argv[3]
-    mem = int(np.floor(float(sys.argv[4])))
-    cohort_prefix = sys.argv[5]
-    genome_build = sys.argv[6]
+    parser = argparse.ArgumentParser(description="Annotate de novo results with evaluation regions")
+    parser.add_argument("--de-novo-final", required=True)
+    parser.add_argument("--eval-regions", required=True)
+    parser.add_argument("--cores", required=True)
+    parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
+    parser.add_argument("--cohort-prefix", required=True)
+    parser.add_argument("--genome-build", required=True)
+
+    args = parser.parse_args()
+
+    de_novo_final = args.de_novo_final
+    eval_regions = args.eval_regions
+    cores = args.cores
+    mem = int(np.floor(args.mem))
+    cohort_prefix = args.cohort_prefix
+    genome_build = args.genome_build
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
@@ -178,7 +196,13 @@ task annotateEvalRegions {
     df.to_csv(cohort_prefix+'_eval_reg.tsv', sep='\t', index=False)
     EOF
 
-    python3 annotate_eval_regions.py ~{de_novo_final} ~{eval_regions} ~{cpu_cores} ~{memory} ~{cohort_prefix} ~{genome_build} > stdout
+    python3 annotate_eval_regions.py \
+        --de-novo-final ~{de_novo_final} \
+        --eval-regions ~{eval_regions} \
+        --cores ~{cpu_cores} \
+        --mem ~{memory} \
+        --cohort-prefix ~{cohort_prefix} \
+        --genome-build ~{genome_build} > stdout
     >>>
 
     output {
