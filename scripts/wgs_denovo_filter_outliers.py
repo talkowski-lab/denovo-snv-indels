@@ -68,4 +68,6 @@ all_format_fields = ['GT'] + sorted([x for x in all_format_fields if x not in ['
 mt = mt.select_entries(*[getattr(mt, field) for field in all_format_fields])
 
 sample_qc.to_csv(f"{os.path.basename(vcf_file).split('.vcf')[0]}.sample_qc.txt", sep='\t', index=False)
-hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0]+'_removed_outliers.vcf.bgz')
+
+header = hl.get_vcf_metadata(vcf_file)
+hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0]+'_removed_outliers.vcf.bgz', metadata=header)
