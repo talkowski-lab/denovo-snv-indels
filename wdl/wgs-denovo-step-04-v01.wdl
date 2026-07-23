@@ -13,7 +13,6 @@ workflow step4 {
     input {
         File ped_uri_trios
         Array[File] split_trio_annot_vcfs
-        String get_sample_pedigree_script
         String trio_denovo_docker
         Float minDQ = 2
         Boolean replace_missing_pl = false
@@ -34,7 +33,6 @@ workflow step4 {
             input:
                 ped_uri_trios=ped_uri_trios,
                 vcf_file=select_first([replaceMissingPL.output_vcf, vcf_file]),
-                get_sample_pedigree_script=get_sample_pedigree_script,
                 trio_denovo_docker=trio_denovo_docker,
                 minDQ=minDQ,
                 runtime_attr_override=runtime_attr_trio_denovo
@@ -56,9 +54,10 @@ task trio_denovo {
     input {
         File ped_uri_trios
         File vcf_file
-        String get_sample_pedigree_script
         String trio_denovo_docker
         Float minDQ
+        
+        File? get_sample_pedigree_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -93,8 +92,8 @@ task trio_denovo {
         sample="${sample%.filled.PL}"
         sample=$(echo "$sample" | awk -F "_trio_" '{print $2}')
         sample="${sample//_HP_VAF/}"
-        curl ~{get_sample_pedigree_script} > get_sample_pedigree_script.py
-        python3 get_sample_pedigree_script.py ~{ped_uri_trios} $sample
+        python3 ~{default="/opt/scripts/getSamplePedigree.py" get_sample_pedigree_script_override} \
+             ~{ped_uri_trios} $sample
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
             --in_vcf "~{vcf_file}" \
             --out_vcf "~{basename(vcf_file, '.vcf') + '.denovos.vcf'}" \

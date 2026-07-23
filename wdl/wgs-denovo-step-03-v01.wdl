@@ -18,8 +18,6 @@ workflow step3 {
         String hail_docker
         String cohort_prefix
         String trio_denovo_docker
-        String uberSplit_v3_script
-        String subset_ped_script
         Int batch_size=10
 
         File hg38_reference
@@ -43,7 +41,6 @@ workflow step3 {
                 ped_sex_qc=ped_sex_qc,
                 vcf_file=merged_preprocessed_vcf_file_filtered,
                 trio_denovo_docker=trio_denovo_docker,
-                subset_ped_script=subset_ped_script,
                 runtime_attr_override=runtime_attr_subset_ped
         }
     }
@@ -57,7 +54,6 @@ workflow step3 {
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             stats_file=stats_file,
-            uberSplit_v3_script=uberSplit_v3_script,
             batch_size=batch_size,
             runtime_attr_override=runtime_attr_uber_split
     }
@@ -86,8 +82,9 @@ task subsetPed {
     input {
         File ped_sex_qc
         File vcf_file
-        String subset_ped_script
         String trio_denovo_docker
+        
+        File? subset_ped_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -118,8 +115,8 @@ task subsetPed {
 
     command <<<
         bcftools query -l ~{vcf_file} > samples.txt
-        curl ~{subset_ped_script} > subset_ped_script.py
-        python3 subset_ped_script.py samples.txt ~{ped_sex_qc} > stdout
+        python3 ~{default="/opt/scripts/subset_ped.py" subset_ped_script_override} \
+            samples.txt ~{ped_sex_qc} > stdout
     >>>
 
     output {
@@ -134,8 +131,9 @@ task uberSplit_v3 {
         String hail_docker
         String cohort_prefix
         String stats_file
-        String uberSplit_v3_script       
         Int batch_size
+        
+        File? uberSplit_v3_script_override       
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, "GB")
@@ -166,8 +164,8 @@ task uberSplit_v3 {
     command {
         set -eou pipefail
         mkdir -p ~{cohort_prefix}
-        curl ~{uberSplit_v3_script} > uberSplit_v3.py
-        python3 uberSplit_v3.py ~{ped_sex_qc} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
+        python3 ~{default="/opt/scripts/uberSplit_v3.py" uberSplit_v3_script_override} \
+            ~{ped_sex_qc} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
     }
 
     output {

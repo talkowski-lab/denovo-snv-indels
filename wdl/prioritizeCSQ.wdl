@@ -13,7 +13,6 @@ workflow prioritizeCSQ {
     input {
         File vcf_metrics_tsv
         File vep_vcf_file
-        String prioritize_csq_script
         String hail_docker
         String sample_column
         String genome_build
@@ -23,7 +22,6 @@ workflow prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
         vep_vcf_file=vep_vcf_file,
-        prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,
         genome_build=genome_build
@@ -38,10 +36,11 @@ task annotateMostSevereCSQ {
     input {
         File vcf_metrics_tsv
         File vep_vcf_file
-        String prioritize_csq_script
         String hail_docker
         String sample_column
         String genome_build
+
+        File? prioritize_csq_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -75,8 +74,8 @@ task annotateMostSevereCSQ {
     String file_ext = if sub(basename(vcf_metrics_tsv), '\\.gz', '')==basename(vcf_metrics_tsv) then '.tsv' else '.tsv.gz'
     command <<<
         set -eou pipefail
-        curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory} \
+        python3 ~{default="/opt/scripts/wgs_prioritize_csq_new.py" prioritize_csq_script_override} \
+            ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory} \
         ~{sample_column} ~{vep_vcf_file} ~{genome_build}
     >>>
 

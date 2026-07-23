@@ -15,7 +15,6 @@ workflow step5 {
         Array[File] split_trio_annot_vcfs  # from step03
         Array[File] trio_denovo_vcf  # from step04
         Array[String] info_fields = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','cohort_AF','CSQ', 'MPC']
-        String merge_vcf_to_tsv_fullQC_script
         String trio_denovo_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_step5
@@ -26,7 +25,6 @@ workflow step5 {
             ped_sex_qc=ped_sex_qc,
             split_trio_annot_vcfs=split_trio_annot_vcfs,
             trio_denovo_vcf=trio_denovo_vcf,
-            merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
             cohort_prefix=cohort_prefix,
             info_fields=info_fields,
@@ -41,12 +39,13 @@ workflow step5 {
 task merge_vcf_to_tsv_fullQC {
     input {
         File ped_sex_qc
-        String merge_vcf_to_tsv_fullQC_script
         Array[File] split_trio_annot_vcfs 
         Array[File] trio_denovo_vcf
         Array[String] info_fields
         String trio_denovo_docker
         String cohort_prefix
+        
+        File? merge_vcf_to_tsv_fullQC_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -78,8 +77,8 @@ task merge_vcf_to_tsv_fullQC {
     command <<<
         input_dir=$(dirname ~{split_trio_annot_vcfs[0]})
         output_dir=$(dirname ~{trio_denovo_vcf[0]})
-        curl ~{merge_vcf_to_tsv_fullQC_script} > merge_vcf_to_tsv_fullQC.py
-        python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv \
+        python3 ~{default="/opt/scripts/merge_vcf_to_tsv_fullQC.py" merge_vcf_to_tsv_fullQC_script_override} \        
+            -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv \
             -f ~{sep="," info_fields} > stdout
     >>>
 

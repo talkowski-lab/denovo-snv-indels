@@ -18,7 +18,6 @@ workflow step2 {
         File relatedness_qc
         File ped_sex_qc
         String hail_docker
-        String remove_outliers_script
         RuntimeAttr? runtime_attr_remove_outliers
     }
 
@@ -28,7 +27,6 @@ workflow step2 {
         relatedness_qc=relatedness_qc,
         ped_sex_qc=ped_sex_qc,
         hail_docker=hail_docker,
-        remove_outliers_script=remove_outliers_script,
         runtime_attr_override=runtime_attr_remove_outliers
     }
 
@@ -44,7 +42,8 @@ task removeOutliers {
         File relatedness_qc
         File ped_sex_qc
         String hail_docker
-        String remove_outliers_script
+        
+        File? remove_outliers_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(merged_preprocessed_vcf_file, "GB")
@@ -75,8 +74,8 @@ task removeOutliers {
     }
 
     command {
-        curl ~{remove_outliers_script} > remove_outliers.py
-        python3 remove_outliers.py ~{merged_preprocessed_vcf_file} ~{relatedness_qc} ~{ped_sex_qc} > stdout
+        python3 ~{default="/opt/scripts/wgs_denovo_filter_outliers.py" remove_outliers_script_override} \
+            ~{relatedness_qc} ~{ped_sex_qc} > stdout
     }
 
     output {
