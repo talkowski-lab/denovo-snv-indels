@@ -81,7 +81,8 @@ workflow wgs_denovo_full {
             filter_pass=filter_pass,
             exclude_gq_filters=exclude_gq_filters,
             merge_split_vcf=merge_split_vcf,
-            shards_per_chunk=shards_per_chunk
+            shards_per_chunk=shards_per_chunk,
+            python_trio_sample_script=python_trio_sample_script
     }
 
     call step2.step2 as step2 {
