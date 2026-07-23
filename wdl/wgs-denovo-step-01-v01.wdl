@@ -14,8 +14,6 @@ struct RuntimeAttr {
 
 workflow step1 {
     input {
-        String python_trio_sample_script
-        String python_preprocess_script
         File lcr_uri
         File ped_sex_qc
         Array[File] annot_vcf_files
@@ -46,7 +44,6 @@ workflow step1 {
 
     call makeTrioSampleFiles {
         input:
-            python_trio_sample_script=python_trio_sample_script,
             ped_sex_qc=ped_sex_qc,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker
@@ -72,7 +69,6 @@ workflow step1 {
             }
             call preprocessVCF as preprocessVCFChunk {
                 input:
-                    python_preprocess_script=python_preprocess_script,
                     lcr_uri=lcr_uri,
                     ped_sex_qc=ped_sex_qc,
                     vcf_uri=mergeChunk.merged_vcf_file,
@@ -108,7 +104,6 @@ workflow step1 {
         scatter (vcf_uri in annot_vcf_files) {
             call preprocessVCF {
                 input:
-                    python_preprocess_script=python_preprocess_script,
                     lcr_uri=lcr_uri,
                     ped_sex_qc=ped_sex_qc,
                     vcf_uri=vcf_uri,
@@ -150,7 +145,7 @@ workflow step1 {
 
 task makeTrioSampleFiles {
     input {
-        String python_trio_sample_script
+        File? python_trio_sample_script_override
         File ped_sex_qc
         String cohort_prefix
         String hail_docker
@@ -161,8 +156,8 @@ task makeTrioSampleFiles {
     }
 
     command <<<
-    curl ~{python_trio_sample_script} > python_trio_sample_script.py
-    python3 python_trio_sample_script.py ~{ped_sex_qc} ~{cohort_prefix} 
+    python3 ~{default="/opt/scripts/makeTrioSampleFiles.py" python_trio_sample_script_override} \
+        ~{ped_sex_qc} ~{cohort_prefix} 
     >>>
     
     output {
@@ -173,7 +168,7 @@ task makeTrioSampleFiles {
 
 task preprocessVCF {
     input {
-        String python_preprocess_script
+        File? python_preprocess_script_override
         File lcr_uri
         File ped_sex_qc
         File vcf_uri
@@ -226,8 +221,7 @@ task preprocessVCF {
     String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
         set -eou pipefail
-        curl ~{python_preprocess_script} > python_preprocess_script.py
-        python3 python_preprocess_script.py \
+        python3 ~{default="/opt/scripts/wgs_pre_processing_vcf_v3_Loose_Filters.py" python_preprocess_script_override} \
         --lcr-uri ~{lcr_uri} \
         --ped-uri ~{ped_sex_qc} \
         --meta-uri ~{meta_uri} \
