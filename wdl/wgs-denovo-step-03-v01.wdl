@@ -17,7 +17,6 @@ workflow step3 {
         File merged_preprocessed_vcf_file_filtered
         String hail_docker
         String cohort_prefix
-        String trio_denovo_docker
         Int batch_size=10
 
         File hg38_reference
@@ -40,7 +39,7 @@ workflow step3 {
             input:
                 ped_sex_qc=ped_sex_qc,
                 vcf_file=merged_preprocessed_vcf_file_filtered,
-                trio_denovo_docker=trio_denovo_docker,
+                hail_docker=hail_docker,
                 runtime_attr_override=runtime_attr_subset_ped
         }
     }
@@ -82,7 +81,7 @@ task subsetPed {
     input {
         File ped_sex_qc
         File vcf_file
-        String trio_denovo_docker
+        String hail_docker
         
         File? subset_ped_script_override
         RuntimeAttr? runtime_attr_override
@@ -109,7 +108,7 @@ task subsetPed {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: trio_denovo_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
