@@ -56,8 +56,7 @@ task trio_denovo {
         File vcf_file
         String trio_denovo_docker
         Float minDQ
-        
-        File? get_sample_pedigree_script_override
+    
         RuntimeAttr? runtime_attr_override
     }
 
@@ -88,12 +87,29 @@ task trio_denovo {
 
     command <<<
         set -eou pipefail
+        cat <<EOF > getSamplePedigree.py
+            import os
+            import pandas as pd
+            import sys
+
+            ped_uri = sys.argv[1]
+            ped = pd.read_csv(ped_uri, sep='\t', dtype={i: str for i in range(4)}).iloc[:,:6]
+            ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
+            ped.index = ped.sample_id
+
+            sample = sys.argv[2]
+
+            parents = ped.loc[sample].iloc[2:4].tolist()
+
+            ped.loc[parents+[sample]].to_csv(f"{sample}.ped", sep='\t', index=False, header=None) 
+        EOF
+
         sample=$(basename "~{vcf_file}" '.vcf')
         sample="${sample%.filled.PL}"
         sample=$(echo "$sample" | awk -F "_trio_" '{print $2}')
         sample="${sample//_HP_VAF/}"
-        python3 ~{default="/opt/scripts/getSamplePedigree.py" get_sample_pedigree_script_override} \
-             ~{ped_uri_trios} $sample
+
+        python3 getSamplePedigree.py ~{ped_uri_trios} $sample
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
             --in_vcf "~{vcf_file}" \
             --out_vcf "~{basename(vcf_file, '.vcf') + '.denovos.vcf'}" \

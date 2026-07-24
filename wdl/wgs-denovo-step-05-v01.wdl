@@ -15,7 +15,7 @@ workflow step5 {
         Array[File] split_trio_annot_vcfs  # from step03
         Array[File] trio_denovo_vcf  # from step04
         Array[String] info_fields = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','cohort_AF','CSQ', 'MPC']
-        String trio_denovo_docker
+        String hail_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_step5
     }
@@ -25,7 +25,7 @@ workflow step5 {
             ped_sex_qc=ped_sex_qc,
             split_trio_annot_vcfs=split_trio_annot_vcfs,
             trio_denovo_vcf=trio_denovo_vcf,
-            trio_denovo_docker=trio_denovo_docker,
+            hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             info_fields=info_fields,
             runtime_attr_override=runtime_attr_step5
@@ -42,7 +42,7 @@ task merge_vcf_to_tsv_fullQC {
         Array[File] split_trio_annot_vcfs 
         Array[File] trio_denovo_vcf
         Array[String] info_fields
-        String trio_denovo_docker
+        String hail_docker
         String cohort_prefix
         
         File? merge_vcf_to_tsv_fullQC_script_override
@@ -70,7 +70,7 @@ task merge_vcf_to_tsv_fullQC {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: trio_denovo_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
