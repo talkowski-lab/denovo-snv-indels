@@ -211,64 +211,39 @@ task replaceMissingPL {
     command <<<
         cat <<EOF > vcf_replace_missing_pl.py
         #!/usr/bin/env python3
+        import pysam
         import argparse
-        import gzip
 
-        def open_maybe_gzip(path, mode):
-            if path.endswith(".gz"):
-                return gzip.open(path, mode + "t")
-            return open(path, mode)
-
-        def fill_and_reorder_PL(input_vcf, output_vcf):
+        def fill_missing_PL(input_vcf, output_vcf):
             """
-            For every record:
-              - Move PL to be the last FORMAT field (some tools/pipelines assume this).
-              - Replace a missing PL value ('.') with the 3-value missing form ('.,.,.').
+            Replace PL values that are (None,) with (None, None, None) for all samples in the VCF.
             """
-            with open_maybe_gzip(input_vcf, "r") as vin, open_maybe_gzip(output_vcf, "w") as vout:
-                for line in vin:
-                    if line.startswith("#"):
-                        vout.write(line)
-                        continue
+            vcf_in = pysam.VariantFile(input_vcf, "r")
+            vcf_out = pysam.VariantFile(output_vcf, "w", header=vcf_in.header)
 
-                    fields = line.rstrip("\n").split("\t")
-                    format_keys = fields[8].split(":")
+            for rec in vcf_in:
+                for sample in rec.samples:
+                    pl_val = rec.samples[sample].get("PL")
+                    
+                    # Only replace if it's a single-element tuple containing None
+                    if isinstance(pl_val, tuple) and pl_val == (None,):
+                        rec.samples[sample]["PL"] = (None, None, None)
 
-                    if "PL" in format_keys:
-                        # New FORMAT order: everything else, then PL last.
-                        new_order = [k for k in format_keys if k != "PL"] + ["PL"]
-                        fields[8] = ":".join(new_order)
+                vcf_out.write(rec)
 
-                        for s in range(9, len(fields)):
-                            sample_vals = fields[s].split(":")
-                            # VCF allows trailing fields to be dropped when missing; pad them back.
-                            while len(sample_vals) < len(format_keys):
-                                sample_vals.append(".")
-
-                            val_by_key = dict(zip(format_keys, sample_vals))
-
-                            pl_val = val_by_key.get("PL", ".")
-                            if pl_val == ".":
-                                pl_val = ".,.,."
-                            val_by_key["PL"] = pl_val
-
-                            fields[s] = ":".join(val_by_key[k] for k in new_order)
-
-                    vout.write("\t".join(fields) + "\n")
-
-            print(f"Done! PL moved to last FORMAT field, missing PL filled as .,.,. Output: {output_vcf}")
+            vcf_in.close()
+            vcf_out.close()
+            print(f"Done! PL values (None,) replaced with (None, None, None). Output: {output_vcf}")
 
 
         if __name__ == "__main__":
-            parser = argparse.ArgumentParser(
-                description="Reorder FORMAT fields so PL is always last, and fill missing PL with .,.,."
-            )
+            parser = argparse.ArgumentParser(description="Fill PL values of (None,) with (None,None,None)")
             parser.add_argument("input_vcf", help="Input VCF file")
             parser.add_argument("output_vcf", help="Output VCF file")
 
             args = parser.parse_args()
 
-            fill_and_reorder_PL(args.input_vcf, args.output_vcf)
+            fill_missing_PL(args.input_vcf, args.output_vcf)
         EOF
 
         python3 vcf_replace_missing_pl.py "~{vcf_file}" "~{output_filename}"
