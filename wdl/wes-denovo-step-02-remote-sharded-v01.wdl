@@ -19,9 +19,9 @@ workflow step2 {
         String hail_docker
         String bucket_id
         String genome_build
-        Float call_rate_threshold=0.8
 
         # Hardcoded filters defaults
+        Float call_rate_threshold=0.8
         Int min_dp = 7
         Int max_dp = 1000
         Int min_gq = 25
@@ -54,9 +54,9 @@ workflow step2 {
                 hail_basic_filtering_script_override=hail_basic_filtering_script_override,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
-                call_rate_threshold=call_rate_threshold,
                 
                 # Passing parameters to task
+                call_rate_threshold=call_rate_threshold,
                 min_dp=min_dp,
                 max_dp=max_dp,
                 min_gq=min_gq,
