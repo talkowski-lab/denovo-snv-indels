@@ -34,8 +34,8 @@ workflow wgs_denovo_full {
         String sv_base_mini_docker
         String trio_denovo_docker
         String hail_docker
-        String jvarkit_docker
-        String sample_column
+        String jvarkit_docker = "lindenb/jvarkit:1b2aedf24"
+        String sample_column = "SAMPLE"
 
         # Note: only scripts that are shared between steps/tasks are input at the top-level
         # All other scripts and runtime_attr inputs are added at the sub-workflow/task level
