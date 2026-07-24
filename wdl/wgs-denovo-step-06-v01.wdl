@@ -21,6 +21,9 @@ workflow step6 {
         String hail_docker
         String sample_column
         String genome_build
+
+        File? prioritize_csq_script_override
+        File? filter_final_tsv_script_override
         RuntimeAttr? runtime_attr_prioritize
         RuntimeAttr? runtime_attr_filter_final
     }
@@ -32,6 +35,7 @@ workflow step6 {
         hail_docker=hail_docker,
         sample_column=sample_column,
         genome_build=genome_build,
+        prioritize_csq_script_override=prioritize_csq_script_override,
         runtime_attr_override=runtime_attr_prioritize
     }
 
@@ -42,6 +46,7 @@ workflow step6 {
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
             hail_docker=hail_docker,
+            filter_final_tsv_script_override=filter_final_tsv_script_override,
             runtime_attr_override=runtime_attr_filter_final
     }
 

@@ -18,6 +18,8 @@ workflow step2 {
         File relatedness_qc
         File ped_sex_qc
         String hail_docker
+
+        File? remove_outliers_script_override
         RuntimeAttr? runtime_attr_remove_outliers
     }
 
@@ -27,6 +29,7 @@ workflow step2 {
         relatedness_qc=relatedness_qc,
         ped_sex_qc=ped_sex_qc,
         hail_docker=hail_docker,
+        remove_outliers_script_override=remove_outliers_script_override,
         runtime_attr_override=runtime_attr_remove_outliers
     }
 

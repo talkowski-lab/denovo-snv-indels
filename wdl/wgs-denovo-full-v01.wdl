@@ -39,8 +39,8 @@ workflow wgs_denovo_full {
 
         # Note: only scripts that are shared between steps/tasks are input at the top-level
         # All other scripts and runtime_attr inputs are added at the sub-workflow/task level
-        String python_trio_sample_script
-        String prioritize_csq_script
+        File? python_trio_sample_script_override
+        File? prioritize_csq_script_override
 
         Boolean filter_pass=true
         Boolean exclude_gq_filters=false
@@ -82,7 +82,7 @@ workflow wgs_denovo_full {
             exclude_gq_filters=exclude_gq_filters,
             merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk,
-            python_trio_sample_script=python_trio_sample_script
+            python_trio_sample_script_override=python_trio_sample_script_override
     }
 
     call step2.step2 as step2 {
@@ -99,7 +99,6 @@ workflow wgs_denovo_full {
             merged_preprocessed_vcf_file_filtered=step2.merged_preprocessed_vcf_file_filtered,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
-            trio_denovo_docker=trio_denovo_docker,
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
@@ -119,7 +118,7 @@ workflow wgs_denovo_full {
             ped_sex_qc=ped_sex_qc,
             split_trio_annot_vcfs=step3.split_trio_annot_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
-            trio_denovo_docker=trio_denovo_docker,
+            hail_docker=hail_docker,
             cohort_prefix=cohort_prefix
     }
 
@@ -130,7 +129,7 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             sample_column=sample_column,
             genome_build=genome_build,
-            prioritize_csq_script=prioritize_csq_script
+            prioritize_csq_script_override=prioritize_csq_script_override
     }
 
     call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
@@ -138,7 +137,7 @@ workflow wgs_denovo_full {
             annot_vcf_files=annot_vcf_files,
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
-            python_trio_sample_script=python_trio_sample_script,
+            python_trio_sample_script_override=python_trio_sample_script_override,
             vcf_metrics_tsv_final=step6.vcf_metrics_tsv_final,
             hg38_reference=hg38_reference,
             hg38_reference_dict=hg38_reference_dict,
@@ -156,7 +155,7 @@ workflow wgs_denovo_full {
             qd_threshold_snv=qd_threshold_snv,
             mq_threshold=mq_threshold,
             prioritize_gnomad=false,
-            prioritize_csq_script=prioritize_csq_script,
+            prioritize_csq_script_override=prioritize_csq_script_override,
             genome_build=genome_build
     }
 
@@ -165,7 +164,7 @@ workflow wgs_denovo_full {
             annot_vcf_files=annot_vcf_files,
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
-            python_trio_sample_script=python_trio_sample_script,
+            python_trio_sample_script_override=python_trio_sample_script_override,
             vcf_metrics_tsv_final=step6.vcf_metrics_tsv_final,
             hg38_reference=hg38_reference,
             hg38_reference_dict=hg38_reference_dict,
@@ -183,7 +182,7 @@ workflow wgs_denovo_full {
             qd_threshold_snv=qd_threshold_snv,
             mq_threshold=mq_threshold,
             prioritize_gnomad=true,
-            prioritize_csq_script=prioritize_csq_script,
+            prioritize_csq_script_override=prioritize_csq_script_override,
             genome_build=genome_build
     }
 

@@ -2,8 +2,6 @@ version 1.0
 
 # assuming filterUltraRareInheritedVariantsHail and filterUltraRareParentsVariantsHail already run
 import "wgs-denovo-bagging-pu-rf-len.wdl" as BaggingPU_RF
-import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
-import "filterUltraRareParentsVariantsHail.wdl" as filterUltraRareParentsVariantsHail 
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
 
 struct RuntimeAttr {
@@ -32,9 +30,9 @@ workflow step7 {
 
         File repetitive_regions_bed
         String var_type  # Indel or SNV
-        String bagging_pu_source_script
-        String bagging_pu_rf_len_script
-        String tsv_to_bed_script
+        File? bagging_pu_source_script_override
+        File? bagging_pu_rf_len_script_override
+        File? tsv_to_bed_script_override
         String metric='fp_fn_ratio'
         Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
         Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
@@ -64,9 +62,9 @@ workflow step7 {
             ultra_rare_parents_tsv=downsampled_ultra_rare_parents,
             repetitive_regions_bed=repetitive_regions_bed,
             var_type=var_type,
-            bagging_pu_source_script=bagging_pu_source_script,
-            bagging_pu_rf_len_script=bagging_pu_rf_len_script,
-            tsv_to_bed_script=tsv_to_bed_script,
+            bagging_pu_source_script_override=bagging_pu_source_script_override,
+            bagging_pu_rf_len_script_override=bagging_pu_rf_len_script_override,
+            tsv_to_bed_script_override=tsv_to_bed_script_override,
             cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker,
             hail_docker=hail_docker,

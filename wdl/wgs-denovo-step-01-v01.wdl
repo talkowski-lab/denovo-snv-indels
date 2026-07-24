@@ -35,6 +35,9 @@ workflow step1 {
         Boolean exclude_gq_filters=false
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
+
+        File? python_trio_sample_script_override
+        File? python_preprocess_script_override
         RuntimeAttr? runtime_attr_preprocess
         RuntimeAttr? runtime_attr_merge_split_vcf
         RuntimeAttr? runtime_attr_merge_chunk
@@ -46,7 +49,8 @@ workflow step1 {
         input:
             ped_sex_qc=ped_sex_qc,
             cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            python_trio_sample_script_override=python_trio_sample_script_override
     }
 
     if (merge_split_vcf) {
@@ -87,6 +91,7 @@ workflow step1 {
                     mq_threshold=mq_threshold,
                     filter_pass=filter_pass,
                     exclude_gq_filters=exclude_gq_filters,
+                    python_preprocess_script_override=python_preprocess_script_override,
                     runtime_attr_override=runtime_attr_preprocess
             }
         }
@@ -122,6 +127,7 @@ workflow step1 {
                     mq_threshold=mq_threshold,
                     filter_pass=filter_pass,
                     exclude_gq_filters=exclude_gq_filters,
+                    python_preprocess_script_override=python_preprocess_script_override,
                     runtime_attr_override=runtime_attr_preprocess
             }
         }

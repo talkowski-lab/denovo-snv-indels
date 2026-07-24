@@ -17,6 +17,8 @@ workflow step5 {
         Array[String] info_fields = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','cohort_AF','CSQ', 'MPC']
         String hail_docker
         String cohort_prefix
+
+        File? merge_vcf_to_tsv_fullQC_script_override
         RuntimeAttr? runtime_attr_step5
     }
 
@@ -28,6 +30,7 @@ workflow step5 {
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             info_fields=info_fields,
+            merge_vcf_to_tsv_fullQC_script_override=merge_vcf_to_tsv_fullQC_script_override,
             runtime_attr_override=runtime_attr_step5
     }
 

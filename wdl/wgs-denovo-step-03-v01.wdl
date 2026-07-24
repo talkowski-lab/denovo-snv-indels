@@ -25,6 +25,9 @@ workflow step3 {
         String jvarkit_docker
 
         Boolean subset_ped=true
+
+        File? subset_ped_script_override
+        File? uberSplit_v3_script_override
         RuntimeAttr? runtime_attr_subset_ped
         RuntimeAttr? runtime_attr_uber_split
         RuntimeAttr? runtime_attr_annotate_hp_vaf
@@ -40,6 +43,7 @@ workflow step3 {
                 ped_sex_qc=ped_sex_qc,
                 vcf_file=merged_preprocessed_vcf_file_filtered,
                 hail_docker=hail_docker,
+                subset_ped_script_override=subset_ped_script_override,
                 runtime_attr_override=runtime_attr_subset_ped
         }
     }
@@ -54,6 +58,7 @@ workflow step3 {
             cohort_prefix=cohort_prefix,
             stats_file=stats_file,
             batch_size=batch_size,
+            uberSplit_v3_script_override=uberSplit_v3_script_override,
             runtime_attr_override=runtime_attr_uber_split
     }
 

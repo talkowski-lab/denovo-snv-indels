@@ -18,9 +18,9 @@ workflow BaggingPU_RF {
         File ultra_rare_parents_tsv
         File repetitive_regions_bed
         String var_type  # Indel or SNV
-        String bagging_pu_source_script
-        String bagging_pu_rf_len_script
-        String tsv_to_bed_script
+        File? bagging_pu_source_script_override
+        File? bagging_pu_rf_len_script_override
+        File? tsv_to_bed_script_override
         String cohort_prefix
         String sv_base_mini_docker
         String hail_docker
@@ -39,7 +39,7 @@ workflow BaggingPU_RF {
         input:
         tsv=vcf_metrics_tsv_final,
         repetitive_regions_bed=repetitive_regions_bed,
-        tsv_to_bed_script=tsv_to_bed_script,
+        tsv_to_bed_script_override=tsv_to_bed_script_override,
         sv_base_mini_docker=sv_base_mini_docker,
         hail_docker=hail_docker
     }
@@ -51,8 +51,8 @@ workflow BaggingPU_RF {
             ultra_rare_parents_tsv=ultra_rare_parents_tsv,
             rep_regions=flagRepetitiveRegions.output_bed,
             var_type=var_type,
-            bagging_pu_source_script=bagging_pu_source_script,
-            bagging_pu_rf_len_script=bagging_pu_rf_len_script,
+            bagging_pu_source_script_override=bagging_pu_source_script_override,
+            bagging_pu_rf_len_script_override=bagging_pu_rf_len_script_override,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             metric=metric,
@@ -81,8 +81,6 @@ task runBaggingPU_RF {
         Array[String] variant_features
         Array[String] sample_features
         String var_type
-        String bagging_pu_source_script
-        String bagging_pu_rf_len_script
         String cohort_prefix
         String hail_docker
         String metric
@@ -91,6 +89,9 @@ task runBaggingPU_RF {
         Int n_bag
         Int n_jobs
         Boolean filter_pass_before
+
+        File? bagging_pu_source_script_override
+        File? bagging_pu_rf_len_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -122,11 +123,10 @@ task runBaggingPU_RF {
     Array[String] sample_features_ = if length(sample_features)>0 then sample_features else ["",""]
     Array[String] variant_features_ = if length(variant_features)>0 then variant_features else ["",""]
     command <<<
-        curl ~{bagging_pu_rf_len_script} > run_bagging_pu.py
-        curl ~{bagging_pu_source_script} > baggingPU.py
-        python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} ~{ultra_rare_parents_tsv} \
-        ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features_} ~{sep=',' sample_features_} ~{vqslod_cutoff} \
-        ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} ~{n_jobs} # > stdout
+        python3 ~{default="/opt/scripts/wgs_bagging_pu_rf_len_oob_scores.py" bagging_pu_rf_len_script_override} \
+            ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} ~{ultra_rare_parents_tsv} \
+            ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features_} ~{sep=',' sample_features_} ~{vqslod_cutoff} \
+            ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} ~{n_jobs} # > stdout
     >>>
 
     output {

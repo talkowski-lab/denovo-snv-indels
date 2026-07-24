@@ -11,28 +11,65 @@ import ast
 import warnings
 import os
 
-lcr_uri = sys.argv[1]
-ped_uri = sys.argv[2]
-meta_uri = sys.argv[3]
-trio_uri = sys.argv[4]
-vcf_file = sys.argv[5]
-cohort_prefix = sys.argv[6]
-cores = sys.argv[7]
-mem = int(np.floor(float(sys.argv[8])))
-ac_threshold = int(sys.argv[9])
-af_threshold = float(sys.argv[10])
-csq_af_threshold = float(sys.argv[11])
-gq_het_threshold = float(sys.argv[12])
-gq_hom_ref_threshold = float(sys.argv[13])
-qual_threshold = int(sys.argv[14])
-sor_threshold_indel = float(sys.argv[15])
-sor_threshold_snv = float(sys.argv[16])
-readposranksum_threshold_indel = float(sys.argv[17])
-readposranksum_threshold_snv = float(sys.argv[18])
-qd_threshold_indel = float(sys.argv[19])
-qd_threshold_snv = float(sys.argv[20])
-mq_threshold = float(sys.argv[21])
-build = sys.argv[22]
+import argparse
+
+parser = argparse.ArgumentParser(description="Filter rare variants with various thresholds and input files.")
+
+parser.add_argument("--lcr-uri", required=True, help="URI for LCR regions")
+parser.add_argument("--ped-uri", required=True, help="URI for PED/sex QC file")
+parser.add_argument("--meta-uri", required=True, help="URI for metadata")
+parser.add_argument("--trio-uri", required=True, help="URI for trio information")
+parser.add_argument("--vcf-file", required=True, help="Input VCF file")
+parser.add_argument("--cohort-prefix", required=True, help="Prefix for cohort outputs")
+parser.add_argument("--cores", required=True, help="Number of CPU cores to use")
+parser.add_argument("--mem", type=float, required=True, help="Memory in GB (float, will be floored to int)")
+
+parser.add_argument("--ac-threshold", type=int, required=True, help="Allele count threshold")
+parser.add_argument("--af-threshold", type=float, required=True, help="Allele frequency threshold")
+parser.add_argument("--csq-af-threshold", type=float, required=True, help="CSQ allele frequency threshold")
+
+parser.add_argument("--gq-het-threshold", type=float, required=True, help="GQ threshold for hets")
+parser.add_argument("--gq-hom-ref-threshold", type=float, required=True, help="GQ threshold for hom-ref")
+parser.add_argument("--qual-threshold", type=int, required=True, help="QUAL score threshold")
+
+parser.add_argument("--sor-threshold-indel", type=float, required=True, help="SOR threshold for indels")
+parser.add_argument("--sor-threshold-snv", type=float, required=True, help="SOR threshold for SNVs")
+parser.add_argument("--readposranksum-threshold-indel", type=float, required=True, help="ReadPosRankSum threshold for indels")
+parser.add_argument("--readposranksum-threshold-snv", type=float, required=True, help="ReadPosRankSum threshold for SNVs")
+parser.add_argument("--qd-threshold-indel", type=float, required=True, help="QD threshold for indels")
+parser.add_argument("--qd-threshold-snv", type=float, required=True, help="QD threshold for SNVs")
+parser.add_argument("--mq-threshold", type=float, required=True, help="MQ threshold")
+
+parser.add_argument("--build", required=True, help="Genome build (e.g., GRCh37 or GRCh38)")
+
+args = parser.parse_args()
+
+lcr_uri = args.lcr_uri
+ped_uri = args.ped_uri
+meta_uri = args.meta_uri
+trio_uri = args.trio_uri
+vcf_file = args.vcf_file
+cohort_prefix = args.cohort_prefix
+cores = args.cores
+mem = int(np.floor(args.mem))
+
+ac_threshold = args.ac_threshold
+af_threshold = args.af_threshold
+csq_af_threshold = args.csq_af_threshold
+
+gq_het_threshold = args.gq_het_threshold
+gq_hom_ref_threshold = args.gq_hom_ref_threshold
+qual_threshold = args.qual_threshold
+
+sor_threshold_indel = args.sor_threshold_indel
+sor_threshold_snv = args.sor_threshold_snv
+readposranksum_threshold_indel = args.readposranksum_threshold_indel
+readposranksum_threshold_snv = args.readposranksum_threshold_snv
+qd_threshold_indel = args.qd_threshold_indel
+qd_threshold_snv = args.qd_threshold_snv
+mq_threshold = args.mq_threshold
+
+build = args.build
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 
