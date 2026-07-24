@@ -22,7 +22,7 @@ workflow step3 {
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
-        String jvarkit_docker
+        String jvarkit_docker = "lindenb/jvarkit:1b2aedf24"
 
         Boolean subset_ped=true
 
