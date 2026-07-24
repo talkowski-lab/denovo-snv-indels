@@ -12,7 +12,9 @@ struct RuntimeAttr {
 workflow step4 {
     input {
         File ped_uri_trios
-        Array[File] split_trio_vcfs
+        # Note: need to use split_trio_vcfs, instead of split_trio_annot_vcfs from step3
+        # because triodenovo package throws errors with the FORMAT field formatting after annotateHPandVAF 
+        Array[File] split_trio_vcfs  
         String trio_denovo_docker
         Float minDQ = 2
         Boolean replace_missing_pl = true
