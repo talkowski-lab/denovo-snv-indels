@@ -80,7 +80,7 @@ task merge_vcf_to_tsv_fullQC {
     command <<<
         input_dir=$(dirname ~{split_trio_annot_vcfs[0]})
         output_dir=$(dirname ~{trio_denovo_vcf[0]})
-        python3 ~{default="/opt/scripts/merge_vcf_to_tsv_fullQC.py" merge_vcf_to_tsv_fullQC_script_override} \        
+        python3 ~{default="/opt/scripts/merge_vcf_to_tsv_fullQC.py" merge_vcf_to_tsv_fullQC_script_override} \
             -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv \
             -f ~{sep="," info_fields} > stdout
     >>>
