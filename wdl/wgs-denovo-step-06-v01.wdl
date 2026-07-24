@@ -19,8 +19,8 @@ workflow step6 {
         Int AC_threshold=2
         Float csq_af_threshold=0.01
         String hail_docker
-        String sample_column
         String genome_build
+        String sample_column = "SAMPLE"
 
         File? prioritize_csq_script_override
         File? filter_final_tsv_script_override
