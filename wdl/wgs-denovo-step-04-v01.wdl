@@ -15,7 +15,7 @@ workflow step4 {
         Array[File] split_trio_annot_vcfs
         String trio_denovo_docker
         Float minDQ = 2
-        Boolean replace_missing_pl = false
+        Boolean replace_missing_pl = true
         RuntimeAttr? runtime_attr_replace_missing_pl
         RuntimeAttr? runtime_attr_trio_denovo
         RuntimeAttr? runtime_attr_combine_vcfs
