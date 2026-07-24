@@ -75,7 +75,7 @@ task removeOutliers {
 
     command {
         python3 ~{default="/opt/scripts/wgs_denovo_filter_outliers.py" remove_outliers_script_override} \
-            ~{relatedness_qc} ~{ped_sex_qc} > stdout
+            ~{merged_preprocessed_vcf_file} ~{relatedness_qc} ~{ped_sex_qc} > stdout
     }
 
     output {

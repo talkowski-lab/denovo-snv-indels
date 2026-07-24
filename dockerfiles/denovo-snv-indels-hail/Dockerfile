@@ -65,6 +65,34 @@ RUN apt-get -qqy update --fix-missing && \
         /usr/share/man/?? \
         /usr/share/man/??_*
 
+# Install Google Cloud SDK
+ENV GCLOUD_SDK_VERSION="485.0.0"
+RUN echo "Installing Google Cloud SDK..." && \
+    cd /tmp && \
+    wget -q https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    echo "Extracting Google Cloud SDK..." && \
+    tar xzf google-cloud-sdk-${GCLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    echo "Contents after extraction:" && \
+    ls -la google-cloud-sdk/ && \
+    echo "Installing Google Cloud SDK..." && \
+    ./google-cloud-sdk/install.sh -q --path-update=false --command-completion=false && \
+    echo "Moving to final location..." && \
+    mv google-cloud-sdk /opt/ && \
+    echo "Cleaning up..." && \
+    rm google-cloud-sdk-${GCLOUD_SDK_VERSION}-linux-x86_64.tar.gz
+
+ENV PATH=/opt/google-cloud-sdk/bin:$PATH
+
+RUN export SPARK_HOME=$(find_spark_home.py) && \
+    curl --fail --silent --show-error --location \
+         https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/3.1.3/gcs-connector-3.1.3-shaded.jar \
+         >${SPARK_HOME}/jars/gcs-connector-3.1.3-shaded.jar && \
+    mkdir -p $SPARK_HOME/conf && \
+    touch $SPARK_HOME/conf/spark-defaults.conf && \
+    sed -i $SPARK_HOME/conf/spark-defaults.conf \
+        -e 's:spark\.hadoop\.google\.cloud\.auth\.service\.account\.enable.*:spark.hadoop.google.cloud.auth.service.account.enable true:' \
+        -e 's:spark\.hadoop\.google\.cloud\.auth\.service\.account\.json\.keyfile.*:spark\.hadoop\.google\.cloud\.auth\.service\.account\.json\.keyfile /gsa-key/key.json:'
+
 ##################################################
 # Copy scripts and set environment execution paths
 ##################################################
