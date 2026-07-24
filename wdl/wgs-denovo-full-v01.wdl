@@ -108,7 +108,7 @@ workflow wgs_denovo_full {
     call step4.step4 as step4 {
         input:
             ped_uri_trios=step3.ped_uri_trios,
-            split_trio_annot_vcfs=step3.split_trio_annot_vcfs,
+            split_trio_vcfs=step3.split_trio_vcfs,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ
     }

@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow step4 {
     input {
         File ped_uri_trios
-        Array[File] split_trio_annot_vcfs
+        Array[File] split_trio_vcfs
         String trio_denovo_docker
         Float minDQ = 2
         Boolean replace_missing_pl = true
@@ -20,7 +20,7 @@ workflow step4 {
         RuntimeAttr? runtime_attr_trio_denovo
         RuntimeAttr? runtime_attr_combine_vcfs
     }
-    scatter (vcf_file in split_trio_annot_vcfs) {
+    scatter (vcf_file in split_trio_vcfs) {
         if (replace_missing_pl) {
             call replaceMissingPL {
                 input:
