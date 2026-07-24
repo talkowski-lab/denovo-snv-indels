@@ -16,7 +16,6 @@ workflow step2 {
         File ped_sex_qc
         File lcr_uri
         Array[String] annot_mt
-        String hail_basic_filtering_script
         String hail_docker
         String bucket_id
         String genome_build
@@ -34,6 +33,7 @@ workflow step2 {
         Float informative_read_threshold = 0.9
         Float phwe_threshold = 0.000000000001
 
+        File? hail_basic_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -51,7 +51,7 @@ workflow step2 {
                 ped_sex_qc=ped_sex_qc,
                 prefix=basename(mt_uri, "_wes_denovo_annot.mt"),
                 bucket_id=bucket_id,
-                hail_basic_filtering_script=hail_basic_filtering_script,
+                hail_basic_filtering_script_override=hail_basic_filtering_script_override,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 call_rate_threshold=call_rate_threshold,
@@ -87,7 +87,6 @@ task hailBasicFilteringRemote {
         String annot_mt
         String prefix
         String bucket_id
-        String hail_basic_filtering_script
         String hail_docker
         String genome_build
         # Hardcoded filters
@@ -102,6 +101,7 @@ task hailBasicFilteringRemote {
         Float informative_read_threshold
         Float phwe_threshold
 
+        File? hail_basic_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -132,10 +132,8 @@ task hailBasicFilteringRemote {
     }
 
     command {
-        set -e
-        curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        
-        python3 hail_basic_filtering_script.py \
+        set -e        
+        python3 ~{default="/opt/scripts/wes_denovo_basic_filtering.py" hail_basic_filtering_script_override} \
             --annot-mt ~{annot_mt} \
             --prefix ~{prefix} \
             --ped-uri ~{ped_sex_qc} \

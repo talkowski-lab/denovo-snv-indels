@@ -15,7 +15,6 @@ workflow step5 {
         File de_novo_merged
         File eval_regions
         String cohort_prefix
-        String final_filtering_script
         String hail_docker
         String genome_build
         Int vqslod_cutoff_snv=-20
@@ -23,6 +22,8 @@ workflow step5 {
         Int AD_alt_threshold=10
         Float af_threshold=0.005
         Boolean single_variant=true
+
+        File? final_filtering_script_override
         RuntimeAttr? runtime_attr_filter_final
         RuntimeAttr? runtime_attr_eval_regions
     }
@@ -31,7 +32,7 @@ workflow step5 {
         input:
         de_novo_merged=de_novo_merged,
         cohort_prefix=cohort_prefix,
-        final_filtering_script=final_filtering_script,
+        final_filtering_script_override=final_filtering_script_override,
         hail_docker=hail_docker,
         vqslod_cutoff_snv=vqslod_cutoff_snv,
         vqslod_cutoff_indel=vqslod_cutoff_indel,
@@ -60,13 +61,14 @@ task finalFiltering {
     input {
         File de_novo_merged
         String cohort_prefix
-        String final_filtering_script
         String hail_docker
         Int vqslod_cutoff_snv
         Int vqslod_cutoff_indel
         Int AD_alt_threshold
         Float af_threshold
         Boolean single_variant
+
+        File? final_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(de_novo_merged, 'GB')
@@ -98,8 +100,7 @@ task finalFiltering {
     }
 
     command <<<
-    curl ~{final_filtering_script} > final_filtering.py
-    python3 final_filtering.py \
+    python3 ~{default="/opt/scripts/wes_denovo_final_filtering.py" final_filtering_script_override} \
         --de-novo-merged ~{de_novo_merged} \
         --cohort-prefix ~{cohort_prefix} \
         --vqslod-cutoff-snv ~{vqslod_cutoff_snv} \

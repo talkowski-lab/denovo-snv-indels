@@ -6,7 +6,6 @@ import "wes-denovo-step-03-remote-sharded-v01.wdl" as step3
 import "wes-denovo-step-04-remote-sharded-v01.wdl" as step4
 import "wes-denovo-step-05-remote-sharded-v01.wdl" as step5
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
-import "wes-prioritize-csq.wdl" as prioritizeCSQ
 import "prioritizeCSQ.wdl" as prioritizeCSQ_og
 
 struct RuntimeAttr {

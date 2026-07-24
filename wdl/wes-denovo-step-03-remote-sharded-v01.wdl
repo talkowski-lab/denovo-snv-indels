@@ -17,13 +17,14 @@ workflow step3 {
         File ped_sex_qc
         File loeuf_file
         String bucket_id
-        String hail_denovo_filtering_script
         String hail_docker
         Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
         Int min_gq=25
         Float min_p=0.05
+
+        File? hail_denovo_filtering_script_override
     }
 
     scatter (mt_uri in filtered_mt) {
@@ -41,7 +42,7 @@ workflow step3 {
                 bucket_id=bucket_id,
                 prefix=basename(mt_uri, "_wes_denovo_basic_filtering.mt"),
                 loeuf_file=loeuf_file,
-                hail_denovo_filtering_script=hail_denovo_filtering_script,
+                hail_denovo_filtering_script_override=hail_denovo_filtering_script_override,
                 hail_docker=hail_docker,
                 max_parent_ab=max_parent_ab,
                 min_child_ab=min_child_ab,
@@ -70,13 +71,14 @@ task hailDenovoFilteringRemote {
         String bucket_id
         String prefix
         String loeuf_file
-        String hail_denovo_filtering_script
         String hail_docker
         Float max_parent_ab
         Float min_child_ab
         Float min_dp_ratio
         Int min_gq
         Float min_p
+
+        File? hail_denovo_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -107,8 +109,7 @@ task hailDenovoFilteringRemote {
     }
 
     command {
-        curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
-        python3 hail_denovo_filtering_script.py \
+        python3 ~{default="/opt/scripts/wes_denovo_denovo_filtering.py" hail_denovo_filtering_script_override} \
             --filtered-mt ~{filtered_mt} \
             --prefix ~{prefix} \
             --ped-uri ~{ped_sex_qc} \
