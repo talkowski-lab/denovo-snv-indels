@@ -37,7 +37,24 @@ def main():
     res_vcf_paths = glob.glob(os.path.join(args.res_vcf_dir, '*.vcf.gz'))
     trio_variant_keys = DefaultDict(pd.DataFrame)  # key: familyID-sampleID; value: list of "chr_pos_ref_alt"
     for res_vcf_path in res_vcf_paths:
-        trio_key = os.path.basename(res_vcf_path).split('_HP_VAF')[0]
+        res_vcf_basename = os.path.basename(res_vcf_path)
+        trio_key = None
+        for suffix in ['.filled.PL.denovos.vcf.gz', '_HP_VAF.vcf.gz', '.vcf.gz']:
+            if res_vcf_basename.endswith(suffix):
+                trio_key = res_vcf_basename[:-len(suffix)]
+                break
+        if trio_key is None:
+            trio_key = res_vcf_basename
+        if trio_key not in triokey_to_samp:
+            raise KeyError(
+                f"trio_key '{trio_key}' (derived from result VCF filename "
+                f"'{os.path.basename(res_vcf_path)}') was not found in the pedigree-derived "
+                f"trio keys. This usually means either (a) the sample/family naming in the "
+                f"result VCF filename doesn't match 'FamID_trio_SampleID' from the pedigree "
+                f"file, or (b) the pedigree file doesn't list this sample as a complete trio "
+                f"(both FatherID and MotherID must be non-'0'). Check the PED file entry for "
+                f"this sample and the filename convention."
+            )
         with gzip.open(res_vcf_path, 'rt') as vcf_file:
             for line in vcf_file:
                 if line.startswith('#CHROM'):
@@ -66,6 +83,16 @@ def main():
     conter = 0
     for in_vcf_path in in_vcf_paths:
         trio_key = os.path.basename(in_vcf_path).replace('.vcf', '').replace('_HP_VAF', '')
+        if trio_key not in triokey_to_samp:
+            raise KeyError(
+                f"trio_key '{trio_key}' (derived from input VCF filename "
+                f"'{os.path.basename(in_vcf_path)}') was not found in the pedigree-derived "
+                f"trio keys. This usually means either (a) the sample/family naming in the "
+                f"input VCF filename doesn't match 'FamID_trio_SampleID' from the pedigree "
+                f"file, or (b) the pedigree file doesn't list this sample as a complete trio "
+                f"(both FatherID and MotherID must be non-'0'). Check the PED file entry for "
+                f"this sample and the filename convention."
+            )
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
         variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID, fixed_info_columns).set_index('ID', drop=False)

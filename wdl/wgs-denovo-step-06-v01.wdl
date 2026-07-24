@@ -95,7 +95,7 @@ task filterFinalTSV {
     }
 
     command {
-        python3 ~{default="/opt/scripts/wgs_denovo_snv_indels_filter.py" filter_final_tsv_script_override} \        
+        python3 ~{default="/opt/scripts/wgs_denovo_snv_indels_filter.py" filter_final_tsv_script_override} \
             ~{vcf_metrics_tsv} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} 
     }
 
