@@ -2,8 +2,6 @@ version 1.0
 
 # assuming filterUltraRareInheritedVariantsHail and filterUltraRareParentsVariantsHail already run
 import "wgs-denovo-bagging-pu-rf-len.wdl" as BaggingPU_RF
-import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
-import "filterUltraRareParentsVariantsHail.wdl" as filterUltraRareParentsVariantsHail 
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
 
 struct RuntimeAttr {
@@ -25,16 +23,16 @@ workflow step7 {
         String cohort_prefix
     
         # 12/12/2024 NEW
-        Boolean batch_coding_only=true
+        Boolean batch_coding_only=false
         Int batch_size=10000
         RuntimeAttr? runtime_attr_batch
         RuntimeAttr? runtime_attr_merge_results
 
         File repetitive_regions_bed
         String var_type  # Indel or SNV
-        String bagging_pu_source_script
-        String bagging_pu_rf_len_script
-        String tsv_to_bed_script
+        File? bagging_pu_source_script_override
+        File? bagging_pu_rf_len_script_override
+        File? tsv_to_bed_script_override
         String metric='fp_fn_ratio'
         Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
         Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
@@ -64,9 +62,9 @@ workflow step7 {
             ultra_rare_parents_tsv=downsampled_ultra_rare_parents,
             repetitive_regions_bed=repetitive_regions_bed,
             var_type=var_type,
-            bagging_pu_source_script=bagging_pu_source_script,
-            bagging_pu_rf_len_script=bagging_pu_rf_len_script,
-            tsv_to_bed_script=tsv_to_bed_script,
+            bagging_pu_source_script_override=bagging_pu_source_script_override,
+            bagging_pu_rf_len_script_override=bagging_pu_rf_len_script_override,
+            tsv_to_bed_script_override=tsv_to_bed_script_override,
             cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker,
             hail_docker=hail_docker,
@@ -158,13 +156,13 @@ task splitIntoBatches {
     base_filename = os.path.basename(file).split(file_ext)[0]
     i=0
     if batch_coding_only:  # save all coding to one batch
-        df[df.isCoding].to_csv(f"{base_filename}.shard_{i}.all_coding_only.{file_ext}", sep='\t', index=False)
+        df[df.isCoding].to_csv(f"{base_filename}.shard_{i}.all_coding_only{file_ext}", sep='\t', index=False)
         df = df[~df.isCoding].copy()
         i+=1
 
     while df.shape[0]>0:
         batch = df.sample(min(batch_size, df.shape[0]))
-        batch.to_csv(f"{base_filename}.shard_{i}.{file_ext}", sep='\t', index=False)
+        batch.to_csv(f"{base_filename}.shard_{i}{file_ext}", sep='\t', index=False)
         df = df.drop(batch.index)    
         i+=1    
     EOF

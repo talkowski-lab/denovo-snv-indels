@@ -24,8 +24,9 @@ workflow filterUltraRareInheritedVariantsHail {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        String python_trio_sample_script
-        String filter_rare_inherited_python_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/main/scripts/wgs_ultra_rare_inherited_variants_hail.py"
+        File? python_trio_sample_script_override
+        File? filter_rare_inherited_python_script_override
+
         String jvarkit_docker
         String hail_docker
         String sv_base_mini_docker
@@ -46,7 +47,7 @@ workflow filterUltraRareInheritedVariantsHail {
         String genome_build='GRCh38'
 
         # for prioritizeCSQ
-        String prioritize_csq_script
+        File? prioritize_csq_script_override
         String sample_column='SAMPLE'
 
         #for downsampling
@@ -69,7 +70,7 @@ workflow filterUltraRareInheritedVariantsHail {
     if (!defined(meta_uri)) {
         call makeTrioSampleFiles {
             input:
-                python_trio_sample_script=python_trio_sample_script,
+                python_trio_sample_script_override=python_trio_sample_script_override,
                 ped_sex_qc=ped_sex_qc,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker
@@ -87,7 +88,7 @@ workflow filterUltraRareInheritedVariantsHail {
                 ped_sex_qc=ped_sex_qc,
                 meta_uri=meta_uri_,
                 trio_uri=trio_uri_,
-                filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+                filter_rare_inherited_python_script_override=filter_rare_inherited_python_script_override,
                 hail_docker=hail_docker,
                 cohort_prefix=basename(vcf_file, file_ext),
                 AC_threshold=AC_threshold,
@@ -121,7 +122,7 @@ workflow filterUltraRareInheritedVariantsHail {
         vcf_metrics_tsv=mergeResults_sharded.merged_tsv,
         vep_vcf_file=annot_vcf_files[0],
         hail_docker=hail_docker,
-        prioritize_csq_script=prioritize_csq_script,
+        prioritize_csq_script_override=prioritize_csq_script_override,
         sample_column=sample_column,
         genome_build=genome_build,
         runtime_attr_override=runtime_attr_prioritize
@@ -177,7 +178,7 @@ workflow filterUltraRareInheritedVariantsHail {
 
 task makeTrioSampleFiles {
     input {
-        String python_trio_sample_script
+        File? python_trio_sample_script_override
         File ped_sex_qc
         String cohort_prefix
         String hail_docker
@@ -188,8 +189,8 @@ task makeTrioSampleFiles {
     }
 
     command <<<
-    curl ~{python_trio_sample_script} > python_trio_sample_script.py
-    python3 python_trio_sample_script.py ~{ped_sex_qc} ~{cohort_prefix} 
+    python3 ~{default="/opt/scripts/makeTrioSampleFiles.py" python_trio_sample_script_override} \
+        ~{ped_sex_qc} ~{cohort_prefix} 
     >>>
     
     output {
@@ -206,7 +207,7 @@ task filterUltraRareInheritedVariants {
         File ped_sex_qc
         File meta_uri
         File trio_uri
-        String filter_rare_inherited_python_script
+        File? filter_rare_inherited_python_script_override
         String hail_docker
         String cohort_prefix
         Int AC_threshold
@@ -255,8 +256,7 @@ task filterUltraRareInheritedVariants {
 
     command <<<
         set -eou pipefail
-        curl ~{filter_rare_inherited_python_script} > filter_rare_variants.py
-        python3 filter_rare_variants.py \
+        python3 ~{default="/opt/scripts/wgs_ultra_rare_inherited_variants_hail.py" filter_rare_inherited_python_script_override} \
         --lcr-uri ~{lcr_uri} \
         --ped-uri ~{ped_sex_qc} \
         --meta-uri ~{meta_uri} \

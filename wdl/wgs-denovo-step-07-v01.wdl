@@ -25,9 +25,10 @@ workflow step7 {
         File hg38_reference_dict
         File hg38_reference_fai
 
-        String prioritize_csq_script
-        String filter_rare_inherited_python_script
-        String filter_rare_parents_python_script
+        File? prioritize_csq_script_override
+        File? filter_rare_inherited_python_script_override
+        File? filter_rare_parents_python_script_override
+
         String jvarkit_docker
         String hail_docker
         String sv_base_mini_docker
@@ -63,10 +64,10 @@ workflow step7 {
 
         File repetitive_regions_bed
         # String var_type  # Indel or SNV, only Indel for now
-        String python_trio_sample_script
-        String bagging_pu_source_script
-        String bagging_pu_rf_len_script
-        String tsv_to_bed_script
+        File? python_trio_sample_script_override
+        File? bagging_pu_source_script_override
+        File? bagging_pu_rf_len_script_override
+        File? tsv_to_bed_script_override
         String metric='fp_fn_ratio'
         Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
         Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
@@ -92,9 +93,9 @@ workflow step7 {
                 hg38_reference_fai=hg38_reference_fai,
                 remove_regions=remove_regions,
                 remove_regions_bed=select_first([remove_regions_bed]),
-                python_trio_sample_script=python_trio_sample_script,
-                prioritize_csq_script=prioritize_csq_script,
-                filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+                python_trio_sample_script_override=python_trio_sample_script_override,
+                prioritize_csq_script_override=prioritize_csq_script_override,
+                filter_rare_inherited_python_script_override=filter_rare_inherited_python_script_override,
                 jvarkit_docker=jvarkit_docker,
                 hail_docker=hail_docker,
                 sv_base_mini_docker=sv_base_mini_docker,
@@ -136,9 +137,9 @@ workflow step7 {
                 hg38_reference_fai=hg38_reference_fai,
                 remove_regions=remove_regions,
                 remove_regions_bed=select_first([remove_regions_bed]),
-                python_trio_sample_script=python_trio_sample_script,
-                prioritize_csq_script=prioritize_csq_script,
-                filter_rare_parents_python_script=filter_rare_parents_python_script,
+                python_trio_sample_script_override=python_trio_sample_script_override,
+                prioritize_csq_script_override=prioritize_csq_script_override,
+                filter_rare_parents_python_script_override=filter_rare_parents_python_script_override,
                 jvarkit_docker=jvarkit_docker,
                 hail_docker=hail_docker,
                 sv_base_mini_docker=sv_base_mini_docker,
@@ -181,9 +182,9 @@ workflow step7 {
                 hg38_reference_dict=hg38_reference_dict,
                 hg38_reference_fai=hg38_reference_fai,
                 remove_regions=remove_regions,
-                python_trio_sample_script=python_trio_sample_script,
-                prioritize_csq_script=prioritize_csq_script,
-                filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+                python_trio_sample_script_override=python_trio_sample_script_override,
+                prioritize_csq_script_override=prioritize_csq_script_override,
+                filter_rare_inherited_python_script_override=filter_rare_inherited_python_script_override,
                 jvarkit_docker=jvarkit_docker,
                 hail_docker=hail_docker,
                 sv_base_mini_docker=sv_base_mini_docker,
@@ -224,9 +225,9 @@ workflow step7 {
                 hg38_reference_dict=hg38_reference_dict,
                 hg38_reference_fai=hg38_reference_fai,
                 remove_regions=remove_regions,
-                python_trio_sample_script=python_trio_sample_script,
-                prioritize_csq_script=prioritize_csq_script,
-                filter_rare_parents_python_script=filter_rare_parents_python_script,
+                python_trio_sample_script_override=python_trio_sample_script_override,
+                prioritize_csq_script_override=prioritize_csq_script_override,
+                filter_rare_parents_python_script_override=filter_rare_parents_python_script_override,
                 jvarkit_docker=jvarkit_docker,
                 hail_docker=hail_docker,
                 sv_base_mini_docker=sv_base_mini_docker,
@@ -268,9 +269,9 @@ workflow step7 {
         ultra_rare_parents_tsv=downsampled_ultra_rare_parents_Indel_,
         repetitive_regions_bed=repetitive_regions_bed,
         var_type='Indel',  # Indel or SNV, only Indel for now
-        bagging_pu_source_script=bagging_pu_source_script,
-        bagging_pu_rf_len_script=bagging_pu_rf_len_script,
-        tsv_to_bed_script=tsv_to_bed_script,
+        bagging_pu_source_script_override=bagging_pu_source_script_override,
+        bagging_pu_rf_len_script_override=bagging_pu_rf_len_script_override,
+        tsv_to_bed_script_override=tsv_to_bed_script_override,
         cohort_prefix=cohort_prefix,
         sv_base_mini_docker=sv_base_mini_docker,
         hail_docker=hail_docker,

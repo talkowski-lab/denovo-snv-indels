@@ -45,8 +45,8 @@ parser.add_argument("--exclude-gq-filters", type=str2bool, required=True)
 
 # Thresholds
 parser.add_argument("--qual-threshold", type=int, required=True)
-parser.add_argument("--sample-dp-min", type=int, required=True)   # ✅ added
-parser.add_argument("--sample-dp-max", type=int, required=True)   # ✅ added
+parser.add_argument("--sample-dp-min", type=int, required=True)   # added
+parser.add_argument("--sample-dp-max", type=int, required=True)   # added
 
 parser.add_argument("--sor-threshold-indel", type=float, required=True)
 parser.add_argument("--sor-threshold-snv", type=float, required=True)

@@ -15,10 +15,12 @@ workflow step1 {
     input {
         Array[String] mt_uris
         String gnomad_ht_uri
-        String hail_annotation_script
+
         String hail_docker
         String bucket_id
         String genome_build
+
+        File? hail_annotation_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -43,7 +45,7 @@ workflow step1 {
                 gnomad_ht_uri=gnomad_ht_uri,
                 prefix=basename(mt_uri, file_ext),
                 bucket_id=bucket_id,
-                hail_annotation_script=hail_annotation_script,
+                hail_annotation_script_override=hail_annotation_script_override,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_override
@@ -63,9 +65,10 @@ task hailAnnotateRemote {
         String bucket_id
         String prefix
         String gnomad_ht_uri
-        String hail_annotation_script
         String hail_docker
         String genome_build
+
+        File? hail_annotation_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -96,8 +99,7 @@ task hailAnnotateRemote {
     }
 
     command {
-        curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py \
+        python3 ~{default="/opt/scripts/wes_denovo_annotation.py" hail_annotation_script_override} \
             --mt-uri ~{mt_uri} \
             --prefix ~{prefix} \
             --gnomad-ht-uri ~{gnomad_ht_uri} \

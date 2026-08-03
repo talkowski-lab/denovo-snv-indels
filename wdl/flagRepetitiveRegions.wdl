@@ -13,7 +13,7 @@ workflow flagRepetitiveRegions {
     input {
         File tsv
         File repetitive_regions_bed
-        String tsv_to_bed_script
+        File? tsv_to_bed_script_override
         String sv_base_mini_docker
         String hail_docker
     }
@@ -21,7 +21,7 @@ workflow flagRepetitiveRegions {
     call convertTSVtoBED {
         input:
             tsv=tsv,
-            tsv_to_bed_script=tsv_to_bed_script,
+            tsv_to_bed_script_override=tsv_to_bed_script_override,
             hail_docker=hail_docker
     }
 
@@ -40,8 +40,8 @@ workflow flagRepetitiveRegions {
 task convertTSVtoBED {
     input {
         File tsv
-        String tsv_to_bed_script
         String hail_docker
+        File? tsv_to_bed_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -71,8 +71,7 @@ task convertTSVtoBED {
     }
 
     command {
-        curl ~{tsv_to_bed_script} > tsv_to_bed.py
-        python3 tsv_to_bed.py ~{tsv}
+        python3 ~{default="/opt/scripts/wgs_tsv_to_bed.py" tsv_to_bed_script_override} ~{tsv}
     }
     String file_ext = if sub(basename(tsv), '\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
     output {
