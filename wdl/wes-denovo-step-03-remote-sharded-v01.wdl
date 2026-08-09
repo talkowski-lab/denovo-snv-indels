@@ -17,15 +17,14 @@ workflow step3 {
         File ped_sex_qc
         File loeuf_file
         String bucket_id
-        String cohort_prefix
-        String hail_denovo_filtering_script
         String hail_docker
-        String sv_base_mini_docker
         Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
         Int min_gq=25
         Float min_p=0.05
+
+        File? hail_denovo_filtering_script_override
     }
 
     scatter (mt_uri in filtered_mt) {
@@ -41,9 +40,9 @@ workflow step3 {
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
+                prefix=basename(mt_uri, "_wes_denovo_basic_filtering.mt"),
                 loeuf_file=loeuf_file,
-                hail_denovo_filtering_script=hail_denovo_filtering_script,
+                hail_denovo_filtering_script_override=hail_denovo_filtering_script_override,
                 hail_docker=hail_docker,
                 max_parent_ab=max_parent_ab,
                 min_child_ab=min_child_ab,
@@ -70,15 +69,16 @@ task hailDenovoFilteringRemote {
         Float input_size
         String filtered_mt
         String bucket_id
-        String cohort_prefix
+        String prefix
         String loeuf_file
-        String hail_denovo_filtering_script
         String hail_docker
         Float max_parent_ab
         Float min_child_ab
         Float min_dp_ratio
         Int min_gq
         Float min_p
+
+        File? hail_denovo_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -109,12 +109,21 @@ task hailDenovoFilteringRemote {
     }
 
     command {
-        curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
-        python3 hail_denovo_filtering_script.py ~{filtered_mt} ~{cohort_prefix} ~{ped_sex_qc} ~{loeuf_file} \
-        ~{cpu_cores} ~{memory} ~{bucket_id} ~{max_parent_ab} ~{min_child_ab} ~{min_dp_ratio} ~{min_gq} ~{min_p} > stdout
+        python3 ~{default="/opt/scripts/wes_denovo_denovo_filtering.py" hail_denovo_filtering_script_override} \
+            --filtered-mt ~{filtered_mt} \
+            --prefix ~{prefix} \
+            --ped-uri ~{ped_sex_qc} \
+            --loeuf-file ~{loeuf_file} \
+            --cores ~{cpu_cores} \
+            --mem ~{memory} \
+            --bucket-id ~{bucket_id} \
+            --max-parent-ab ~{max_parent_ab} \
+            --min-child-ab ~{min_child_ab} \
+            --min-dp-ratio ~{min_dp_ratio} \
+            --min-gq ~{min_gq} \
+            --min-p ~{min_p} > stdout
     }
 
-    String prefix = basename(filtered_mt, "_wes_denovo_basic_filtering.mt")
     output {
         File de_novo_results = "~{prefix}_wes_final_denovo.txt"
         File de_novo_vep = "~{prefix}_wes_final_denovo_vep.txt"

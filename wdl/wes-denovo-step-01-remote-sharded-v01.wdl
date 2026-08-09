@@ -18,7 +18,7 @@ workflow step1 {
         String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
-        String hail_annotation_script
+        File? hail_annotation_script_override
         String hail_docker
         String bucket_id
         String genome_build

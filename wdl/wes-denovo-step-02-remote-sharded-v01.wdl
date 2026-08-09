@@ -16,14 +16,12 @@ workflow step2 {
         File ped_sex_qc
         File lcr_uri
         Array[String] annot_mt
-        String cohort_prefix
-        String hail_basic_filtering_script
         String hail_docker
         String bucket_id
         String genome_build
-        Float call_rate_threshold=0.8
 
         # Hardcoded filters defaults
+        Float call_rate_threshold=0.8
         Int min_dp = 7
         Int max_dp = 1000
         Int min_gq = 25
@@ -35,6 +33,7 @@ workflow step2 {
         Float informative_read_threshold = 0.9
         Float phwe_threshold = 0.000000000001
 
+        File? hail_basic_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -50,14 +49,14 @@ workflow step2 {
                 annot_mt=mt_uri,
                 input_size=select_first([getHailMTSize.mt_size]),
                 ped_sex_qc=ped_sex_qc,
+                prefix=basename(mt_uri, "_wes_denovo_annot.mt"),
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
-                hail_basic_filtering_script=hail_basic_filtering_script,
+                hail_basic_filtering_script_override=hail_basic_filtering_script_override,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
-                call_rate_threshold=call_rate_threshold,
                 
                 # Passing parameters to task
+                call_rate_threshold=call_rate_threshold,
                 min_dp=min_dp,
                 max_dp=max_dp,
                 min_gq=min_gq,
@@ -86,9 +85,8 @@ task hailBasicFilteringRemote {
         Float input_size
         Float call_rate_threshold
         String annot_mt
+        String prefix
         String bucket_id
-        String cohort_prefix
-        String hail_basic_filtering_script
         String hail_docker
         String genome_build
         # Hardcoded filters
@@ -103,6 +101,7 @@ task hailBasicFilteringRemote {
         Float informative_read_threshold
         Float phwe_threshold
 
+        File? hail_basic_filtering_script_override
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -133,32 +132,29 @@ task hailBasicFilteringRemote {
     }
 
     command {
-        set -e
-        curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        
-        python3 hail_basic_filtering_script.py \
-            --annot_mt ~{annot_mt} \
-            --cohort_prefix ~{cohort_prefix} \
-            --ped_uri ~{ped_sex_qc} \
+        set -e        
+        python3 ~{default="/opt/scripts/wes_denovo_basic_filtering.py" hail_basic_filtering_script_override} \
+            --annot-mt ~{annot_mt} \
+            --prefix ~{prefix} \
+            --ped-uri ~{ped_sex_qc} \
             --cores ~{cpu_cores} \
             --mem ~{memory} \
-            --bucket_id ~{bucket_id} \
-            --lcr_uri ~{lcr_uri} \
-            --call_rate_threshold ~{call_rate_threshold} \
-            --genome_build ~{genome_build} \
-            --min_dp ~{min_dp} \
-            --max_dp ~{max_dp} \
-            --min_gq ~{min_gq} \
-            --min_pl ~{min_pl} \
-            --female_min_dp ~{female_min_dp} \
-            --male_auto_min_dp ~{male_auto_min_dp} \
-            --het_ab_threshold ~{het_ab_threshold} \
-            --het_pab_threshold ~{het_pab_threshold} \
-            --informative_read_threshold ~{informative_read_threshold} \
-            --phwe_threshold ~{phwe_threshold}
+            --bucket-id ~{bucket_id} \
+            --lcr-uri ~{lcr_uri} \
+            --call-rate-threshold ~{call_rate_threshold} \
+            --genome-build ~{genome_build} \
+            --min-dp ~{min_dp} \
+            --max-dp ~{max_dp} \
+            --min-gq ~{min_gq} \
+            --min-pl ~{min_pl} \
+            --female-min-dp ~{female_min_dp} \
+            --male-auto-min-dp ~{male_auto_min_dp} \
+            --het-ab-threshold ~{het_ab_threshold} \
+            --het-pab-threshold ~{het_pab_threshold} \
+            --informative-read-threshold ~{informative_read_threshold} \
+            --phwe-threshold ~{phwe_threshold}
     }
 
-    String prefix = basename(annot_mt, "_wes_denovo_annot.mt")
     output {
         String filtered_mt = read_lines("mt_uri.txt")[0]
         File post_filter_sample_qc_info = "~{prefix}_wes_final_annot_post_filter_qc_info.txt"

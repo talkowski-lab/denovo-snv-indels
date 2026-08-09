@@ -2,19 +2,36 @@ import datetime
 import pandas as pd
 import numpy as np
 import pandas as pd
+import argparse
 import ast
 import sys
 import os
 
-de_novo_merged = sys.argv[1]
-cohort_prefix = sys.argv[2]
-vqslod_cutoff_snv = int(sys.argv[3])
-vqslod_cutoff_indel = int(sys.argv[4])
-MAF_thresh = float(sys.argv[5])
-AD_alt_threshold = int(sys.argv[6])
-cores = sys.argv[7]
-mem = int(np.floor(float(sys.argv[8])))
-single_variant = ast.literal_eval(sys.argv[9].capitalize())
+def str2bool(v):
+    return ast.literal_eval(v.capitalize())
+
+parser = argparse.ArgumentParser(description="WES de novo final filtering")
+parser.add_argument("--de-novo-merged", required=True)
+parser.add_argument("--cohort-prefix", required=True)
+parser.add_argument("--vqslod-cutoff-snv", type=int, required=True)
+parser.add_argument("--vqslod-cutoff-indel", type=int, required=True)
+parser.add_argument("--af-threshold", type=float, required=True)
+parser.add_argument("--ad-alt-threshold", type=int, required=True)
+parser.add_argument("--cores", required=True)
+parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
+parser.add_argument("--single-variant", type=str2bool, required=True)
+
+args = parser.parse_args()
+
+de_novo_merged = args.de_novo_merged
+cohort_prefix = args.cohort_prefix
+vqslod_cutoff_snv = args.vqslod_cutoff_snv
+vqslod_cutoff_indel = args.vqslod_cutoff_indel
+MAF_thresh = args.af_threshold
+AD_alt_threshold = args.ad_alt_threshold
+cores = args.cores
+mem = int(np.floor(args.mem))
+single_variant = args.single_variant
 
 df = pd.read_csv(de_novo_merged, sep='\t')
 df['VarKey'] = df[['ID', 'proband.s']].astype(str).agg(':'.join, axis=1)

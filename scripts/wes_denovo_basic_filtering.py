@@ -16,32 +16,32 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser(description="Basic filtering for WES de novo calling")
-parser.add_argument("--annot_mt", required=True, help="Input MatrixTable")
-parser.add_argument("--cohort_prefix", required=True)
-parser.add_argument("--ped_uri", required=True)
+parser.add_argument("--annot-mt", required=True, help="Input MatrixTable")
+parser.add_argument("--prefix", required=True)
+parser.add_argument("--ped-uri", required=True)
 parser.add_argument("--cores", default="8")
 parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
-parser.add_argument("--bucket_id", required=True)
-parser.add_argument("--lcr_uri", required=True)
-parser.add_argument("--call_rate_threshold", type=float, default=0.8)
-parser.add_argument("--genome_build", default="GRCh38")
+parser.add_argument("--bucket-id", required=True)
+parser.add_argument("--lcr-uri", required=True)
+parser.add_argument("--call-rate-threshold", type=float, default=0.8)
+parser.add_argument("--genome-build", default="GRCh38")
 
 # Parameters for hardcoded filters
-parser.add_argument("--min_dp", type=int, default=7)
-parser.add_argument("--max_dp", type=int, default=1000)
-parser.add_argument("--min_gq", type=int, default=25)
-parser.add_argument("--min_pl", type=int, default=25)
-parser.add_argument("--female_min_dp", type=int, default=10)
-parser.add_argument("--male_auto_min_dp", type=int, default=10)
-parser.add_argument("--het_ab_threshold", type=float, default=0.25)
-parser.add_argument("--het_pab_threshold", type=float, default=0.000000001)
-parser.add_argument("--informative_read_threshold", type=float, default=0.9)
-parser.add_argument("--phwe_threshold", type=float, default=0.000000000001)
+parser.add_argument("--min-dp", type=int, default=7)
+parser.add_argument("--max-dp", type=int, default=1000)
+parser.add_argument("--min-gq", type=int, default=25)
+parser.add_argument("--min-pl", type=int, default=25)
+parser.add_argument("--female-min-dp", type=int, default=10)
+parser.add_argument("--male-auto-min-dp", type=int, default=10)
+parser.add_argument("--het-ab-threshold", type=float, default=0.25)
+parser.add_argument("--het-pab-threshold", type=float, default=0.000000001)
+parser.add_argument("--informative-read-threshold", type=float, default=0.9)
+parser.add_argument("--phwe-threshold", type=float, default=0.000000000001)
 
 args = parser.parse_args()
 
 annot_mt = args.annot_mt
-cohort_prefix = args.cohort_prefix
+prefix = args.prefix
 ped_uri = args.ped_uri
 cores = args.cores
 mem = args.mem
@@ -60,7 +60,7 @@ het_pab_threshold = args.het_pab_threshold
 informative_read_threshold = args.informative_read_threshold
 phwe_threshold = args.phwe_threshold
 
-prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
+# prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",

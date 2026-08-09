@@ -51,11 +51,11 @@ workflow filterUltraRareInheritedVariants {
         Array[File]? annot_mt_uris
         String mpc_ht_uri
         String gnomad_ht_uri
-        String hail_annotation_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_denovo_annotation.py"
+        File? hail_annotation_script_override
         
         # step2
         File lcr_uri
-        String hail_basic_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_wgs_basic_filtering.py"
+        File? hail_basic_filtering_script_override
         
         # To help set variant QC filter defaults
         Boolean is_genome
@@ -70,19 +70,19 @@ workflow filterUltraRareInheritedVariants {
         String cohort_prefix
         String bucket_id
         String hail_docker
-        String hail_ultra_rare_inherited_filtering_script="https://raw.githubusercontent.com/talkowski-lab/denovo-snv-indels/refs/heads/lily-dev/scripts/wes_ultra_rare_inherited_variants_hail.py"
+        File? hail_ultra_rare_inherited_filtering_script_override
 
         File? vep_vcf_file_override  # if vep_vcf_files input is MTs
-        String genome_build='GRCh38'
-        String gnomad_af_field='gnomad_non_neuro_AF'
-        Float gnomad_af_threshold=0.001
-        Float cohort_af_threshold=0.001
-        Int cohort_ac_threshold=20
+        String genome_build = 'GRCh38'
+        String gnomad_af_field = 'gnomad_non_neuro_AF'
+        Float gnomad_af_threshold = 0.001
+        Float cohort_af_threshold = 0.001
+        Int cohort_ac_threshold = 20
         Int? affected_ac_threshold
         Float? affected_af_threshold
-        Boolean coding_only=true
-        Boolean simplify_output=false
-        Array[String] keep_cols=[
+        Boolean coding_only = true
+        Boolean simplify_output = false
+        Array[String] keep_cols = [
             "locus", "alleles", "id", "proband.s", "mother.s", "father.s", "fam_id", "proband_entry.GT", "mother_entry.GT", "father_entry.GT",
             "t_from_dad", "t_from_mom", "u_from_dad", "u_from_mom", "t_indeterminate", "u_indeterminate", "tdt.chi_sq", "tdt.p_value",
             "total_t_from_parents", "total_u_from_parents", "worst_csq.SYMBOL", "worst_csq.Consequence", "worst_csq.most_severe_consequence", "worst_csq.gnomADg_AF", "info.PREDICTED_NONCODING", "isCoding"
@@ -646,7 +646,7 @@ workflow filterUltraRareInheritedVariants {
                     gnomad_ht_uri=gnomad_ht_uri,
                     bucket_id=bucket_id,
                     cohort_prefix=cohort_prefix,
-                    hail_annotation_script=hail_annotation_script,
+                    hail_annotation_script_override=hail_annotation_script_override,
                     genome_build=genome_build,
                     hail_docker=hail_docker
             }
@@ -672,7 +672,7 @@ workflow filterUltraRareInheritedVariants {
                     ped_sex_qc=subsetTrioCaseControlPed.controls_ped,
                     bucket_id=bucket_id,
                     suffix="controls",
-                    hail_basic_filtering_script=hail_basic_filtering_script,
+                    hail_basic_filtering_script_override=hail_basic_filtering_script_override,
                     genome_build=genome_build,
                     hail_docker=hail_docker,
                     filter_snv_pass=control_qc_filters_override.filter_snv_pass,
@@ -708,14 +708,14 @@ workflow filterUltraRareInheritedVariants {
 
         if (length(read_lines(subsetTrioCaseControlPed.trio_cases_ped)) > 1) {
             call step2HailBasicFilteringRemote as step2TrioCases {
-                input:                    
+                input:
                     lcr_uri=lcr_uri,
                     annot_mt=step1_annot_mt,
                     input_size=getStep1MTSize.mt_size,
                     ped_sex_qc=subsetTrioCaseControlPed.trio_cases_ped,
                     bucket_id=bucket_id,
                     suffix="trio_cases",
-                    hail_basic_filtering_script=hail_basic_filtering_script,
+                    hail_basic_filtering_script_override=hail_basic_filtering_script_override,
                     genome_build=genome_build,
                     hail_docker=hail_docker,
                     filter_snv_pass=trio_case_qc_filters_override.filter_snv_pass,
@@ -758,7 +758,7 @@ workflow filterUltraRareInheritedVariants {
                     ped_sex_qc=subsetTrioCaseControlPed.nontrio_cases_ped,
                     bucket_id=bucket_id,
                     suffix="nontrio_cases",
-                    hail_basic_filtering_script=hail_basic_filtering_script,
+                    hail_basic_filtering_script_override=hail_basic_filtering_script_override,
                     genome_build=genome_build,
                     hail_docker=hail_docker,
                     filter_snv_pass=nontrio_case_qc_filters_override.filter_snv_pass,
@@ -822,9 +822,9 @@ workflow filterUltraRareInheritedVariants {
                 filtered_mt=mergeStep2SubsetMTs.merged_mt,
                 input_size=getStep2MergedMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                vep_vcf_file=select_first([vep_vcf_file_override, vcf_file]),  # Fixed reference to current scattered file
+                vep_vcf_file=select_first([vep_vcf_file_override, vcf_file]),
                 cohort_prefix=cohort_prefix,
-                hail_ultra_rare_inherited_filtering_script=hail_ultra_rare_inherited_filtering_script,
+                hail_ultra_rare_inherited_filtering_script_override=hail_ultra_rare_inherited_filtering_script_override,
                 hail_docker=hail_docker,
                 gnomad_af_field=gnomad_af_field,
                 gnomad_af_threshold=gnomad_af_threshold,
@@ -929,7 +929,7 @@ task step2HailBasicFilteringRemote {
         String annot_mt
         String bucket_id
         String? suffix
-        String hail_basic_filtering_script
+        File? hail_basic_filtering_script_override
         String hail_docker
         String genome_build
         # Variant filters
@@ -992,9 +992,7 @@ task step2HailBasicFilteringRemote {
 
     command <<<
         set -e
-        curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        
-        python3 hail_basic_filtering_script.py \
+        python3 ~{default="/opt/scripts/wes_wgs_basic_filtering.py" hail_basic_filtering_script_override} \
             --annot_mt ~{annot_mt} \
             --ped_uri ~{ped_sex_qc} \
             --cores ~{cpu_cores} \
@@ -1076,7 +1074,7 @@ task hailUltraRareInheritedFilteringRemote {
         Float input_size
         String filtered_mt
         String cohort_prefix
-        String hail_ultra_rare_inherited_filtering_script
+        File? hail_ultra_rare_inherited_filtering_script_override
         String hail_docker
         String gnomad_af_field
         Float gnomad_af_threshold
@@ -1118,8 +1116,7 @@ task hailUltraRareInheritedFilteringRemote {
     Array[String] keep_cols_for_cmd = if simplify_output then keep_cols else []
     
     command <<<
-        curl ~{hail_ultra_rare_inherited_filtering_script} > hail_ultra_rare_inherited_filtering_script.py
-        python3 hail_ultra_rare_inherited_filtering_script.py \
+        python3 ~{default="/opt/scripts/wes_ultra_rare_inherited_variants_hail.py" hail_ultra_rare_inherited_filtering_script_override} \
             --ped-uri ~{ped_sex_qc} \
             --filt-mt-uri ~{filtered_mt} \
             --vep-vcf-uri ~{vep_vcf_file} \

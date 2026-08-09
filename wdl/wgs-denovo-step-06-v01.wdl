@@ -18,11 +18,12 @@ workflow step6 {
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
-        String filter_final_tsv_script
-        String prioritize_csq_script
         String hail_docker
-        String sample_column
         String genome_build
+        String sample_column = "SAMPLE"
+
+        File? prioritize_csq_script_override
+        File? filter_final_tsv_script_override
         RuntimeAttr? runtime_attr_prioritize
         RuntimeAttr? runtime_attr_filter_final
     }
@@ -31,10 +32,10 @@ workflow step6 {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
         vep_vcf_file=annot_vcf_files[0],
-        prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,
         genome_build=genome_build,
+        prioritize_csq_script_override=prioritize_csq_script_override,
         runtime_attr_override=runtime_attr_prioritize
     }
 
@@ -44,8 +45,8 @@ workflow step6 {
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
-            filter_final_tsv_script=filter_final_tsv_script,
             hail_docker=hail_docker,
+            filter_final_tsv_script_override=filter_final_tsv_script_override,
             runtime_attr_override=runtime_attr_filter_final
     }
 
@@ -61,8 +62,9 @@ task filterFinalTSV {
         Float AF_threshold
         Int AC_threshold
         Float csq_af_threshold
-        String filter_final_tsv_script
         String hail_docker
+        
+        File? filter_final_tsv_script_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -93,8 +95,8 @@ task filterFinalTSV {
     }
 
     command {
-        curl ~{filter_final_tsv_script} > filter_tsv.py
-        python3 filter_tsv.py ~{vcf_metrics_tsv} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} 
+        python3 ~{default="/opt/scripts/wgs_denovo_snv_indels_filter.py" filter_final_tsv_script_override} \
+            ~{vcf_metrics_tsv} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} 
     }
 
     output {

@@ -464,6 +464,7 @@ def apply_affected_ac_filter(mt, affected_ac_threshold):
     return mt.filter_rows(mt.affected_AC <= affected_ac_threshold)
 
 
+
 def annotate_affected_unaffected_AC(mt, ped_ht):
 # Annotate sex, phenotype from PED
     mt = mt.annotate_cols(reported_sex = ped_ht[mt.s].sex)
@@ -711,6 +712,7 @@ inh_td = td.filter_entries(
     keep=False,
 )
 
+# Save inherited output
 inh_td_uri = f"{prefix}.ultra.rare.inherited.mt"
 inh_td = inh_td.checkpoint(inh_td_uri, overwrite=True)
 inh_output_uri = f"{prefix}.ultra.rare.inherited.tsv.gz"
@@ -737,7 +739,11 @@ non_trio_cases_mt = non_trio_cases_mt.filter_entries(non_trio_cases_mt.GT.is_non
 non_trio_cases_mt_uri = f"{prefix}.ultra.rare.non.trio.cases.mt"
 non_trio_cases_mt = non_trio_cases_mt.checkpoint(non_trio_cases_mt_uri, overwrite=True)
 non_trio_cases_output_uri = f"{prefix}.ultra.rare.non.trio.cases.tsv.gz"
-non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
+if simplify_output:
+    non_trio_keep_cols = [c for c in keep_cols if c in non_trio_cases_mt.entries().flatten().row]
+    non_trio_cases_mt.entries().flatten().select(*non_trio_keep_cols).export(non_trio_cases_output_uri)
+else:
+    non_trio_cases_mt.entries().flatten().export(non_trio_cases_output_uri)
 
 # Control/unaffected samples that aren't parents in complete trios
 all_parent_samples = [

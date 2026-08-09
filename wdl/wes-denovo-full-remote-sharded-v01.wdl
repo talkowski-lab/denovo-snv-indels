@@ -6,8 +6,6 @@ import "wes-denovo-step-03-remote-sharded-v01.wdl" as step3
 import "wes-denovo-step-04-remote-sharded-v01.wdl" as step4
 import "wes-denovo-step-05-remote-sharded-v01.wdl" as step5
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
-import "wes-prioritize-csq.wdl" as prioritizeCSQ
-import "prioritizeCSQ.wdl" as prioritizeCSQ_og
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -26,24 +24,15 @@ workflow hailDenovoWES {
         File loeuf_file
         File eval_regions
 
-        String sample_column
         String bucket_id
-        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
         String genome_build
 
-        String hail_annotation_script
-        String hail_basic_filtering_script
-        String hail_denovo_filtering_script
-        String prioritize_csq_script
-        String final_filtering_script
-
-        String hail_docker
-        String sv_base_mini_docker
         String hail_docker
 
-        # Step2 hardcoded filters defaults
+        # step2 filters
+        Float call_rate_threshold = 0.8
         Int min_dp = 7
         Int max_dp = 1000
         Int min_gq = 25
@@ -55,37 +44,36 @@ workflow hailDenovoWES {
         Float informative_read_threshold = 0.9
         Float phwe_threshold = 0.000000000001
 
-        Float max_parent_ab=0.05
-        Float min_child_ab=0.25
-        Float min_dp_ratio=0.1
-        Int min_gq=25
-        Float min_p=0.05
-        Int vqslod_cutoff_snv=-20
-        Int vqslod_cutoff_indel=-2
-        Float af_threshold=0.005
-        Float call_rate_threshold=0.8
-        Boolean single_variant=true
-
-        RuntimeAttr? runtime_attr_merge_results
-        RuntimeAttr? runtime_attr_prioritize
+        # step3 filters
+        Float max_parent_ab = 0.05
+        Float min_child_ab = 0.25
+        Float min_dp_ratio = 0.1
+        Int min_gq = 25
+        Float min_p = 0.05
     }
 
     scatter (mt_uri in mt_uris) {
+        # Find file extension/type of mt_uri (VCF or MT)
+        String base_name = basename(mt_uri)
+        String file_ext = if sub(base_name, "\\.mt$", "") != base_name then ".mt"
+                        else if sub(base_name, "\\.vcf\\.gz$", "") != base_name then ".vcf.gz"
+                        else if sub(base_name, "\\.vcf\\.bgz$", "") != base_name then ".vcf.bgz"
+                        else ".unknown"
+        String mt_uri_prefix = basename(mt_uri, file_ext)
+        
         call helpers.getHailMTSize as getInputMTSize {
             input:
                 mt_uri=mt_uri,
                 hail_docker=hail_docker
         }
+
         call step1.hailAnnotateRemote as step1 {
             input:
                 mt_uri=mt_uri,
+                cohort_prefix=mt_uri_prefix,
                 input_size=getInputMTSize.mt_size,
-                ped_sex_qc=ped_sex_qc,
-                mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
-                hail_annotation_script=hail_annotation_script,
                 genome_build=genome_build,
                 hail_docker=hail_docker
         }
@@ -96,15 +84,18 @@ workflow hailDenovoWES {
                 hail_docker=hail_docker
         }
 
+
         call step2.hailBasicFilteringRemote as step2 {
             input:
                 lcr_uri=lcr_uri,
                 annot_mt=step1.annot_mt,
+                prefix=mt_uri_prefix,
                 input_size=getStep1MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
-                hail_basic_filtering_script=hail_basic_filtering_script,
+                genome_build=genome_build,
+                hail_docker=hail_docker,
+                # Passing parameters to task
                 call_rate_threshold=call_rate_threshold,
                 min_dp=min_dp,
                 max_dp=max_dp,
@@ -115,9 +106,7 @@ workflow hailDenovoWES {
                 het_ab_threshold=het_ab_threshold,
                 het_pab_threshold=het_pab_threshold,
                 informative_read_threshold=informative_read_threshold,
-                phwe_threshold=phwe_threshold,
-                genome_build=genome_build,
-                hail_docker=hail_docker
+                phwe_threshold=phwe_threshold
         }
 
         call helpers.getHailMTSize as getStep2MTSize {
@@ -129,12 +118,11 @@ workflow hailDenovoWES {
         call step3.hailDenovoFilteringRemote as step3 {
             input:
                 filtered_mt=step2.filtered_mt,
+                prefix=mt_uri_prefix,
                 input_size=getStep2MTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
-                cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,
-                hail_denovo_filtering_script=hail_denovo_filtering_script,
                 hail_docker=hail_docker,
                 max_parent_ab=max_parent_ab,
                 min_child_ab=min_child_ab,
@@ -149,13 +137,9 @@ workflow hailDenovoWES {
         de_novo_results_sharded=step3.de_novo_results, 
         de_novo_vep_sharded=step3.de_novo_vep,
         vep_vcf_file=mt_uris[0],
-        sample_column=sample_column,
         cohort_prefix=cohort_prefix,
-        prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
-        genome_build=genome_build,
-        runtime_attr_merge_results=runtime_attr_merge_results,
-        runtime_attr_prioritize=runtime_attr_prioritize
+        genome_build=genome_build
     }
 
     call step5.step5 as step5 {
@@ -163,12 +147,7 @@ workflow hailDenovoWES {
         de_novo_merged=step4.de_novo_merged,
         eval_regions=eval_regions,
         cohort_prefix=cohort_prefix,
-        final_filtering_script=final_filtering_script,
         hail_docker=hail_docker,
-        vqslod_cutoff_snv=vqslod_cutoff_snv,
-        vqslod_cutoff_indel=vqslod_cutoff_indel,
-        af_threshold=af_threshold,
-        single_variant=single_variant,
         genome_build=genome_build
     }
 

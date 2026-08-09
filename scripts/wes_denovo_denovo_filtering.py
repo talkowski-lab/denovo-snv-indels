@@ -3,24 +3,40 @@ import pandas as pd
 import hail as hl
 import numpy as np
 import pandas as pd
+import argparse
 import ast
-import sys
 import os
 
-filtered_mt = sys.argv[1]
-cohort_prefix = sys.argv[2]
-ped_uri = sys.argv[3]
-loeuf_file = sys.argv[4]
-cores = sys.argv[5]
-mem = int(np.floor(float(sys.argv[6])))
-bucket_id = sys.argv[7]
-max_parent_ab = float(sys.argv[8])
-min_child_ab = float(sys.argv[9])
-min_dp_ratio = float(sys.argv[10])
-min_gq = int(sys.argv[11])
-min_p = float(sys.argv[12])
+parser = argparse.ArgumentParser(description="WES de novo filtering")
+parser.add_argument("--filtered-mt", required=True)
+parser.add_argument("--prefix", required=True)
+parser.add_argument("--ped-uri", required=True)
+parser.add_argument("--loeuf-file", required=True)
+parser.add_argument("--cores", required=True)
+parser.add_argument("--mem", type=float, required=True, help="Memory in GB")
+parser.add_argument("--bucket-id", required=True)
+parser.add_argument("--max-parent-ab", type=float, required=True)
+parser.add_argument("--min-child-ab", type=float, required=True)
+parser.add_argument("--min-dp-ratio", type=float, required=True)
+parser.add_argument("--min-gq", type=int, required=True)
+parser.add_argument("--min-p", type=float, required=True)
 
-prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
+args = parser.parse_args()
+
+filtered_mt = args.filtered_mt
+prefix = args.prefix
+ped_uri = args.ped_uri
+loeuf_file = args.loeuf_file
+cores = args.cores
+mem = int(np.floor(args.mem))
+bucket_id = args.bucket_id
+max_parent_ab = args.max_parent_ab
+min_child_ab = args.min_child_ab
+min_dp_ratio = args.min_dp_ratio
+min_gq = args.min_gq
+min_p = args.min_p
+
+# prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
