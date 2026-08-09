@@ -19,14 +19,14 @@ workflow downsampleVariantsfromTSV {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        Int chunk_size=100000
-        Float snv_scale=1
-        Float indel_scale=1
+        Int chunk_size = 100000
+        Float snv_scale = 1
+        Float indel_scale = 1
         String jvarkit_docker
         String hail_docker
-        String genome_build='GRCh38'
-        Boolean prioritize_gnomad=true
-        Boolean prioritize_coding=true
+        String genome_build = 'GRCh38'
+        Boolean prioritize_gnomad = true
+        Boolean prioritize_coding = true
         RuntimeAttr? runtime_attr_downsample
     }
 

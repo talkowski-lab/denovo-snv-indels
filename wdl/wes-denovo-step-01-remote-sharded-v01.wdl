@@ -14,10 +14,8 @@ struct RuntimeAttr {
 workflow step1 {
     input {
         Array[String] mt_uris
-        File ped_sex_qc
-        String mpc_ht_uri
-        String gnomad_ht_uri
         String cohort_prefix
+        String gnomad_ht_uri
         File? hail_annotation_script_override
         String hail_docker
         String bucket_id
@@ -35,12 +33,10 @@ workflow step1 {
             input:
                 mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
-                ped_sex_qc=ped_sex_qc,
-                mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
-                hail_annotation_script=hail_annotation_script,
+                hail_annotation_script_override=hail_annotation_script_override,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_override
@@ -55,14 +51,12 @@ workflow step1 {
 
 task hailAnnotateRemote {
     input {
-        File ped_sex_qc
         Float input_size
         String mt_uri
         String bucket_id
-        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
-        String hail_annotation_script
+        File? hail_annotation_script_override
         String hail_docker
         String genome_build
         RuntimeAttr? runtime_attr_override
@@ -95,10 +89,14 @@ task hailAnnotateRemote {
     }
 
     command {
-        curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py ~{mt_uri} ~{cohort_prefix} ~{ped_sex_qc} \
-        ~{gnomad_ht_uri} ~{mpc_ht_uri} ~{cpu_cores} ~{memory} \
-        ~{bucket_id} ~{genome_build}
+        python3 ~{default="/opt/scripts/wes_denovo_annotation.py" hail_annotation_script_override} \
+            --mt-uri ~{mt_uri} \
+            --prefix ~{cohort_prefix} \
+            --gnomad-ht-uri ~{gnomad_ht_uri} \
+            --cores ~{cpu_cores} \
+            --mem ~{memory} \
+            --bucket-id ~{bucket_id} \
+            --genome-build ~{genome_build}
     }
 
     output {

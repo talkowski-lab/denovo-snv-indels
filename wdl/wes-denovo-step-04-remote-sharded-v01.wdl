@@ -2,7 +2,7 @@
 version 1.0
 
 import "https://raw.githubusercontent.com/talkowski-lab/preprocessing/refs/heads/main/wdl/helpers.wdl" as helpers
-import "prioritizeCSQ.wdl" as prioritizeCSQ_og
+import "prioritizeCSQ.wdl" as prioritizeCSQ
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -54,7 +54,7 @@ workflow step4 {
         runtime_attr_override=runtime_attr_merge_results
     }
 
-    call prioritizeCSQ_og.annotateMostSevereCSQ as annotateMostSevereCSQ {
+    call prioritizeCSQ.annotateMostSevereCSQ as annotateMostSevereCSQ {
         input:
         vcf_metrics_tsv=mergeVEPIntoResults.de_novo_merged,
         vep_vcf_file=vep_vcf_file,

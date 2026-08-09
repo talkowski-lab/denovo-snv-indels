@@ -18,8 +18,8 @@ workflow removeRegionsVariantsfromTSV {
         File hg38_reference_fai
         String jvarkit_docker
         String hail_docker
-        String genome_build='GRCh38'
-        Boolean prioritize_coding=true
+        String genome_build = 'GRCh38'
+        Boolean prioritize_coding = true
         RuntimeAttr? runtime_attr_remove_regions
     }
 

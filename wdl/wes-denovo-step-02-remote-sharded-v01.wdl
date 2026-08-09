@@ -21,7 +21,7 @@ workflow step2 {
         String genome_build
 
         # Hardcoded filters defaults
-        Float call_rate_threshold=0.8
+        Float call_rate_threshold = 0.8
         Int min_dp = 7
         Int max_dp = 1000
         Int min_gq = 25

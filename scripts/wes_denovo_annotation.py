@@ -60,10 +60,6 @@ gnomad_ht = hl.read_table(gnomad_ht_uri)
 mt = mt.annotate_rows(gnomad_non_neuro_AF = 
                       gnomad_ht.index(mt.row_key).freq[hl.eval(gnomad_ht.freq_index_dict["non_neuro"])].AF)
 
-## MPC annotations
-# mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
-# mt = mt.annotate_rows(MPC=mpc[mt.locus, mt.alleles].mpc)
-
 ## pAB annotations
 
 # Add pAB entry field for downstream filtering -- note, only for hets

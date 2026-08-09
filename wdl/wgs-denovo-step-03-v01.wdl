@@ -17,14 +17,14 @@ workflow step3 {
         File merged_preprocessed_vcf_file_filtered
         String hail_docker
         String cohort_prefix
-        Int batch_size=10
+        Int batch_size = 10
 
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
         String jvarkit_docker = "lindenb/jvarkit:1b2aedf24"
 
-        Boolean subset_ped=true
+        Boolean subset_ped = true
 
         File? subset_ped_script_override
         File? uberSplit_v3_script_override

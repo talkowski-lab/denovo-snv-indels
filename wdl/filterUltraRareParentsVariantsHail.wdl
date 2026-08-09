@@ -30,34 +30,34 @@ workflow filterUltraRareParentsVariantsHail {
         String hail_docker
         String sv_base_mini_docker
         String cohort_prefix
-        Float AF_threshold=0.005
-        Int AC_threshold=1
-        Float csq_af_threshold=0.00001
-        Int gq_het_threshold=99
-        Int gq_hom_ref_threshold=30
-        Int qual_threshold=150  # ~30 for DRAGEN
-        Float sor_threshold_indel=3.0
-        Float sor_threshold_snv=2.5
-        Float readposranksum_threshold_indel=-1.7
-        Float readposranksum_threshold_snv=-1.4
-        Float qd_threshold_indel=4.0
-        Float qd_threshold_snv=3.0
-        Float mq_threshold=50
-        String genome_build='GRCh38'
+        Float AF_threshold = 0.005
+        Int AC_threshold = 1
+        Float csq_af_threshold = 0.00001
+        Int gq_het_threshold = 99
+        Int gq_hom_ref_threshold = 30
+        Int qual_threshold = 150  # ~30 for DRAGEN
+        Float sor_threshold_indel = 3.0
+        Float sor_threshold_snv = 2.5
+        Float readposranksum_threshold_indel = -1.7
+        Float readposranksum_threshold_snv = -1.4
+        Float qd_threshold_indel = 4.0
+        Float qd_threshold_snv = 3.0
+        Float mq_threshold = 50
+        String genome_build = 'GRCh38'
 
         # for prioritizeCSQ
         File? prioritize_csq_script_override
-        String sample_column='SAMPLE'
+        String sample_column = 'SAMPLE'
 
         # for downsampling
-        Boolean downsample=true  # optional, downsampling requires WGS de novo output-specific fields
-        Int chunk_size=100000
-        Float snv_scale=1
-        Float indel_scale=1
-        Boolean prioritize_coding=true
-        Boolean prioritize_gnomad=true
+        Boolean downsample = true  # optional, downsampling requires WGS de novo output-specific fields
+        Int chunk_size = 100000
+        Float snv_scale = 1
+        Float indel_scale = 1
+        Boolean prioritize_coding = true
+        Boolean prioritize_gnomad = true
 
-        Boolean remove_regions=false
+        Boolean remove_regions = false
         File? remove_regions_bed
 
         RuntimeAttr? runtime_attr_filter_vcf
@@ -72,8 +72,7 @@ workflow filterUltraRareParentsVariantsHail {
                 python_trio_sample_script_override=python_trio_sample_script_override,
                 ped_sex_qc=ped_sex_qc,
                 cohort_prefix=cohort_prefix,
-                hail_docker=hail_docker,
-
+                hail_docker=hail_docker
         }        
     }
     File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
@@ -106,7 +105,7 @@ workflow filterUltraRareParentsVariantsHail {
                 mq_threshold=mq_threshold,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_filter_vcf
-                }
+        }
     }
     call helpers.mergeResultsPython as mergeResults_sharded {
         input:

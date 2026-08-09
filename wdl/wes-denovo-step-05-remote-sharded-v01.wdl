@@ -17,11 +17,11 @@ workflow step5 {
         String cohort_prefix
         String hail_docker
         String genome_build
-        Int vqslod_cutoff_snv=-20
-        Int vqslod_cutoff_indel=-2
-        Int AD_alt_threshold=10
-        Float af_threshold=0.005
-        Boolean single_variant=true
+        Int vqslod_cutoff_snv = -20
+        Int vqslod_cutoff_indel = -2
+        Int AD_alt_threshold = 10
+        Float af_threshold = 0.005
+        Boolean single_variant = true
 
         File? final_filtering_script_override
         RuntimeAttr? runtime_attr_filter_final

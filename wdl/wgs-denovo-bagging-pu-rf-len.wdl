@@ -27,11 +27,11 @@ workflow BaggingPU_RF {
         String metric
         Array[String] sample_features
         Array[String] variant_features
-        Float vqslod_cutoff=-10
-        Int n_estimators_rf=100
-        Int n_bag=10
-        Int n_jobs=-1
-        Boolean filter_pass_before=false
+        Float vqslod_cutoff = -10
+        Int n_estimators_rf = 100
+        Int n_bag = 10
+        Int n_jobs = -1
+        Boolean filter_pass_before = false
         RuntimeAttr? runtime_attr_bagging_pu
     }
 

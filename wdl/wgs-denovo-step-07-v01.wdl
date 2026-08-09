@@ -33,28 +33,28 @@ workflow step7 {
         String hail_docker
         String sv_base_mini_docker
         String cohort_prefix
-        Float AF_threshold=0.005
-        Int AC_threshold=2
-        Float csq_af_threshold=0.01
-        Int gq_het_threshold=99
-        Int gq_hom_ref_threshold=30
-        Int qual_threshold=150
-        Float sor_threshold_indel=3.0
-        Float sor_threshold_snv=2.5
-        Float readposranksum_threshold_indel=-1.7
-        Float readposranksum_threshold_snv=-1.4
-        Float qd_threshold_indel=4.0
-        Float qd_threshold_snv=3.0
-        Float mq_threshold=50
+        Float AF_threshold = 0.005
+        Int AC_threshold = 2
+        Float csq_af_threshold = 0.01
+        Int gq_het_threshold = 99
+        Int gq_hom_ref_threshold = 30
+        Int qual_threshold = 150
+        Float sor_threshold_indel = 3.0
+        Float sor_threshold_snv = 2.5
+        Float readposranksum_threshold_indel = -1.7
+        Float readposranksum_threshold_snv = -1.4
+        Float qd_threshold_indel = 4.0
+        Float qd_threshold_snv = 3.0
+        Float mq_threshold = 50
 
         # for downsampling
-        Boolean downsample=true
-        Int chunk_size=100000
-        Float snv_scale=1
-        Float indel_scale=1
-        # Boolean prioritize_gnomad=false
+        Boolean downsample = true
+        Int chunk_size = 100000
+        Float snv_scale = 1
+        Float indel_scale = 1
+        # Boolean prioritize_gnomad = false
 
-        Boolean remove_regions=false
+        Boolean remove_regions = false
         File? remove_regions_bed  # unused if remove_regions=false
 
         RuntimeAttr? runtime_attr_filter_vcf
@@ -68,14 +68,14 @@ workflow step7 {
         File? bagging_pu_source_script_override
         File? bagging_pu_rf_len_script_override
         File? tsv_to_bed_script_override
-        String metric='fp_fn_ratio'
-        Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
-        Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
-        Float vqslod_cutoff=-10
-        Int n_estimators_rf=100
-        Int n_bag=10
-        Int n_jobs=-1
-        Boolean filter_pass_before=false
+        String metric = 'fp_fn_ratio'
+        Array[String] sample_features = ["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
+        Array[String] variant_features = ["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
+        Float vqslod_cutoff = -10
+        Int n_estimators_rf = 100
+        Int n_bag = 10
+        Int n_jobs = -1
+        Boolean filter_pass_before = false
         RuntimeAttr? runtime_attr_bagging_pu
     }
 

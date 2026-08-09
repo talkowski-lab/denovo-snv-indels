@@ -40,24 +40,24 @@ workflow wgs_denovo_full {
         File? python_trio_sample_script_override
         File? prioritize_csq_script_override
 
-        Boolean filter_pass=true
-        Boolean exclude_gq_filters=false
-        Boolean merge_split_vcf=false
-        String genome_build='GRCh38'
-        Int shards_per_chunk=10
+        Boolean filter_pass = true
+        Boolean exclude_gq_filters = false
+        Boolean merge_split_vcf = false
+        String genome_build = 'GRCh38'
+        Int shards_per_chunk = 10
 
         # Note: only filters that are shared between steps/tasks are input at the top-level
         # The following filters should be applied uniformly across step1, ultra-rare inherited, ultra-rare parents filtering
         # Other filters are meant to be modifiable based on filtering type, so left out as top-level inputs
-        Int qual_threshold=150
-        Float sor_threshold_indel=3.0
-        Float sor_threshold_snv=2.5
-        Float readposranksum_threshold_indel=-1.7
-        Float readposranksum_threshold_snv=-1.4
-        Float qd_threshold_indel=4.0
-        Float qd_threshold_snv=3.0
-        Float mq_threshold=50
-        Float minDQ=2
+        Int qual_threshold = 150
+        Float sor_threshold_indel = 3.0
+        Float sor_threshold_snv = 2.5
+        Float readposranksum_threshold_indel = -1.7
+        Float readposranksum_threshold_snv = -1.4
+        Float qd_threshold_indel = 4.0
+        Float qd_threshold_snv = 3.0
+        Float mq_threshold = 50
+        Float minDQ = 2
     }
 
     call step1.step1 as step1 {

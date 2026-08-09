@@ -13,6 +13,7 @@ workflow prioritizeCSQ {
     input {
         File vcf_metrics_tsv
         File vep_vcf_file
+        File? prioritize_csq_script_override
         String hail_docker
         String sample_column
         String genome_build
@@ -22,6 +23,7 @@ workflow prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
         vep_vcf_file=vep_vcf_file,
+        prioritize_csq_script_override=prioritize_csq_script_override,
         hail_docker=hail_docker,
         sample_column=sample_column,
         genome_build=genome_build

@@ -23,8 +23,8 @@ workflow step7 {
         String cohort_prefix
     
         # 12/12/2024 NEW
-        Boolean batch_coding_only=false
-        Int batch_size=10000
+        Boolean batch_coding_only = false
+        Int batch_size = 10000
         RuntimeAttr? runtime_attr_batch
         RuntimeAttr? runtime_attr_merge_results
 
@@ -33,14 +33,14 @@ workflow step7 {
         File? bagging_pu_source_script_override
         File? bagging_pu_rf_len_script_override
         File? tsv_to_bed_script_override
-        String metric='fp_fn_ratio'
-        Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
-        Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
-        Float vqslod_cutoff=-10
-        Int n_estimators_rf=100
-        Int n_bag=10
-        Int n_jobs=-1
-        Boolean filter_pass_before=false
+        String metric = 'fp_fn_ratio'
+        Array[String] sample_features = ["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
+        Array[String] variant_features = ["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
+        Float vqslod_cutoff = -10
+        Int n_estimators_rf = 100
+        Int n_bag = 10
+        Int n_jobs = -1
+        Boolean filter_pass_before = false
         RuntimeAttr? runtime_attr_bagging_pu
     }
 

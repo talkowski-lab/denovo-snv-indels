@@ -20,21 +20,21 @@ workflow step1 {
         String hail_docker
         String sv_base_mini_docker
         String cohort_prefix
-        Int shards_per_chunk=10
-        Int qual_threshold=150  # ~30 for DRAGEN
-        Int sample_dp_min=10
-        Int sample_dp_max=200
-        Float sor_threshold_indel=3.0
-        Float sor_threshold_snv=2.5
-        Float readposranksum_threshold_indel=-1.7
-        Float readposranksum_threshold_snv=-1.4
-        Float qd_threshold_indel=4.0
-        Float qd_threshold_snv=3.0
-        Float mq_threshold=50
-        Boolean filter_pass=true
-        Boolean exclude_gq_filters=false
-        Boolean sort_after_merge=false
-        Boolean merge_split_vcf=false
+        Int shards_per_chunk = 10
+        Int qual_threshold = 150  # ~30 for DRAGEN
+        Int sample_dp_min = 10
+        Int sample_dp_max = 200
+        Float sor_threshold_indel = 3.0
+        Float sor_threshold_snv = 2.5
+        Float readposranksum_threshold_indel = -1.7
+        Float readposranksum_threshold_snv = -1.4
+        Float qd_threshold_indel = 4.0
+        Float qd_threshold_snv = 3.0
+        Float mq_threshold = 50
+        Boolean filter_pass = true
+        Boolean exclude_gq_filters = false
+        Boolean sort_after_merge = false
+        Boolean merge_split_vcf = false
 
         File? python_trio_sample_script_override
         File? python_preprocess_script_override

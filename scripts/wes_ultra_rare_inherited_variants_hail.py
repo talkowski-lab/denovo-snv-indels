@@ -464,9 +464,8 @@ def apply_affected_ac_filter(mt, affected_ac_threshold):
     return mt.filter_rows(mt.affected_AC <= affected_ac_threshold)
 
 
-
 def annotate_affected_unaffected_AC(mt, ped_ht):
-# Annotate sex, phenotype from PED
+    # Annotate sex, phenotype from PED
     mt = mt.annotate_cols(reported_sex = ped_ht[mt.s].sex)
     mt = mt.annotate_cols(is_female = (mt.reported_sex == 2))
     mt = mt.annotate_cols(phenotype=ped_ht[mt.s].phenotype)

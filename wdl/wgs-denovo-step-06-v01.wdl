@@ -15,9 +15,9 @@ workflow step6 {
     input {
         File vcf_metrics_tsv
         Array[File] annot_vcf_files
-        Float AF_threshold=0.005
-        Int AC_threshold=2
-        Float csq_af_threshold=0.01
+        Float AF_threshold = 0.005
+        Int AC_threshold = 2
+        Float csq_af_threshold = 0.01
         String hail_docker
         String genome_build
         String sample_column = "SAMPLE"
