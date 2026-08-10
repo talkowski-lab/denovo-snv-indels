@@ -48,7 +48,6 @@ workflow hailDenovoWES {
         Float max_parent_ab = 0.05
         Float min_child_ab = 0.25
         Float min_dp_ratio = 0.1
-        Int min_gq = 25
         Float min_p = 0.05
     }
 
