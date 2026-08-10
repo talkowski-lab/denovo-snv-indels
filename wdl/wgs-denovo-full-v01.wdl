@@ -19,9 +19,13 @@ struct RuntimeAttr {
 
 workflow wgs_denovo_full {
     input {
+        # Choose whether to call step2: Handling relatedness errors
+        Boolean call_step2 = true
+        # Choose whether to call step7: PU model
+        Boolean call_step7 = true
+
         File lcr_uri
         File ped_sex_qc
-        File relatedness_qc
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -83,18 +87,26 @@ workflow wgs_denovo_full {
             python_trio_sample_script_override=python_trio_sample_script_override
     }
 
-    call step2.step2 as step2 {
-        input:
-            merged_preprocessed_vcf_file=step1.merged_preprocessed_vcf_file,
-            relatedness_qc=relatedness_qc,
-            ped_sex_qc=ped_sex_qc,
-            hail_docker=hail_docker
+    if (call_step2) {
+        call step2.step2 as step2 {
+            input:
+                merged_preprocessed_vcf_file=step1.merged_preprocessed_vcf_file,
+                ped_sex_qc=ped_sex_qc,
+                hail_docker=hail_docker
+        }
     }
+
+    File processed_vcf_file = select_first(
+        [
+            step2.merged_preprocessed_vcf_file_filtered,
+            step1.merged_preprocessed_vcf_file
+        ]
+    )
 
     call step3.step3 as step3 {
         input:
             ped_sex_qc=ped_sex_qc,
-            merged_preprocessed_vcf_file_filtered=step2.merged_preprocessed_vcf_file_filtered,
+            merged_preprocessed_vcf_file_filtered=processed_vcf_file,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             hg38_reference=hg38_reference,
@@ -130,32 +142,34 @@ workflow wgs_denovo_full {
             prioritize_csq_script_override=prioritize_csq_script_override
     }
 
-    call step7.step7 as step7 {
-        input:
-            annot_vcf_files=annot_vcf_files,
-            lcr_uri=lcr_uri,
-            ped_sex_qc=ped_sex_qc,
-            meta_uri=step1.meta_uri,
-            trio_uri=step1.trio_uri,
-            vcf_metrics_tsv_final=step6.vcf_metrics_tsv_final,
-            hg38_reference=hg38_reference,
-            hg38_reference_dict=hg38_reference_dict,
-            hg38_reference_fai=hg38_reference_fai,
-            python_trio_sample_script_override=python_trio_sample_script_override,
-            prioritize_csq_script_override=prioritize_csq_script_override,
-            jvarkit_docker=jvarkit_docker,
-            hail_docker=hail_docker,
-            sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix,
-            qual_threshold=qual_threshold,
-            sor_threshold_indel=sor_threshold_indel,
-            sor_threshold_snv=sor_threshold_snv,
-            readposranksum_threshold_indel=readposranksum_threshold_indel,
-            readposranksum_threshold_snv=readposranksum_threshold_snv,
-            qd_threshold_indel=qd_threshold_indel,
-            qd_threshold_snv=qd_threshold_snv,
-            mq_threshold=mq_threshold,
-            repetitive_regions_bed=repetitive_regions_bed
+    if (call_step7) {
+        call step7.step7 as step7 {
+            input:
+                annot_vcf_files=annot_vcf_files,
+                lcr_uri=lcr_uri,
+                ped_sex_qc=ped_sex_qc,
+                meta_uri=step1.meta_uri,
+                trio_uri=step1.trio_uri,
+                vcf_metrics_tsv_final=step6.vcf_metrics_tsv_final,
+                hg38_reference=hg38_reference,
+                hg38_reference_dict=hg38_reference_dict,
+                hg38_reference_fai=hg38_reference_fai,
+                python_trio_sample_script_override=python_trio_sample_script_override,
+                prioritize_csq_script_override=prioritize_csq_script_override,
+                jvarkit_docker=jvarkit_docker,
+                hail_docker=hail_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                qual_threshold=qual_threshold,
+                sor_threshold_indel=sor_threshold_indel,
+                sor_threshold_snv=sor_threshold_snv,
+                readposranksum_threshold_indel=readposranksum_threshold_indel,
+                readposranksum_threshold_snv=readposranksum_threshold_snv,
+                qd_threshold_indel=qd_threshold_indel,
+                qd_threshold_snv=qd_threshold_snv,
+                mq_threshold=mq_threshold,
+                repetitive_regions_bed=repetitive_regions_bed
+        }
     }
 
     output {
@@ -163,8 +177,8 @@ workflow wgs_denovo_full {
         File trio_uri = step1.trio_uri
         File merged_preprocessed_vcf_file = step1.merged_preprocessed_vcf_file
         File merged_preprocessed_vcf_idx = step1.merged_preprocessed_vcf_idx
-        File merged_preprocessed_vcf_file_filtered = step2.merged_preprocessed_vcf_file_filtered
-        File merged_preprocessed_sample_qc = step2.merged_preprocessed_sample_qc
+        File? merged_preprocessed_vcf_file_filtered = step2.merged_preprocessed_vcf_file_filtered
+        File? merged_preprocessed_sample_qc = step2.merged_preprocessed_sample_qc
         File ped_uri_trios = step3.ped_uri_trios
         Array[File] split_trio_vcfs = step3.split_trio_vcfs
         Array[File] split_trio_annot_vcfs = step3.split_trio_annot_vcfs
@@ -172,15 +186,15 @@ workflow wgs_denovo_full {
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
         File vcf_metrics_tsv_prior_csq = step6.vcf_metrics_tsv_prior_csq
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
-        File vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
-        File pu_feature_importances_plot = step7.pu_feature_importances_plot
+        File? vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
+        File? pu_feature_importances_plot = step7.pu_feature_importances_plot
 
-        File ultra_rare_inherited_tsv = step7.ultra_rare_inherited_tsv
-        File downsampled_ultra_rare_inherited_SNV = step7.downsampled_ultra_rare_inherited_SNV
-        File downsampled_ultra_rare_inherited_Indel = step7.downsampled_ultra_rare_inherited_Indel
+        File? ultra_rare_inherited_tsv = step7.ultra_rare_inherited_tsv
+        File? downsampled_ultra_rare_inherited_SNV = step7.downsampled_ultra_rare_inherited_SNV
+        File? downsampled_ultra_rare_inherited_Indel = step7.downsampled_ultra_rare_inherited_Indel
 
-        File ultra_rare_parents_tsv = step7.ultra_rare_parents_tsv
-        File downsampled_ultra_rare_parents_SNV = step7.downsampled_ultra_rare_parents_SNV
-        File downsampled_ultra_rare_parents_Indel = step7.downsampled_ultra_rare_parents_Indel
-    }    
+        File? ultra_rare_parents_tsv = step7.ultra_rare_parents_tsv
+        File? downsampled_ultra_rare_parents_SNV = step7.downsampled_ultra_rare_parents_SNV
+        File? downsampled_ultra_rare_parents_Indel = step7.downsampled_ultra_rare_parents_Indel
+    }
 }
