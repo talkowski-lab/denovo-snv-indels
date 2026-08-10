@@ -100,13 +100,13 @@ mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
 mt = mt.filter_rows((hl.len(mt.filters) == 0) | (~hl.is_defined(mt.filters)))
 
 mt = mt.filter_entries( 
-        (mt.DP < min_dp) | 
-        (mt.DP > max_dp) |
-        ((mt.GT.is_hom_ref()) & (mt.GQ < min_gq) ) |
-        ((mt.GT.is_hom_var()) & (mt.PL[0] < min_pl) ) |
-        ((mt.GT.is_het()) & (mt.PL[0] < min_pl) ), 
-          keep = False
-        )
+    (mt.DP < min_dp) | 
+    (mt.DP > max_dp) |
+    ((mt.GT.is_hom_ref()) & (mt.GQ < min_gq)) |
+    ((mt.GT.is_hom_var()) & (mt.PL[0] < min_pl)) |
+    ((mt.GT.is_het()) & (mt.PL[0] < min_pl)), 
+    keep = False
+)
 
 ## Remove sites with no variant samples
 

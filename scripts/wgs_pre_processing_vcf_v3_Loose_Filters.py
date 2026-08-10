@@ -54,6 +54,8 @@ parser.add_argument("--readposranksum-threshold-indel", type=float, required=Tru
 parser.add_argument("--readposranksum-threshold-snv", type=float, required=True)
 parser.add_argument("--qd-threshold-indel", type=float, required=True)
 parser.add_argument("--qd-threshold-snv", type=float, required=True)
+parser.add_argument("--gq-threshold-homref-parent", type=float, required=True)
+parser.add_argument("--gq-threshold-het-proband", type=float, required=True)
 parser.add_argument("--mq-threshold", type=float, required=True)
 
 # Runtime
@@ -83,6 +85,8 @@ readposranksum_threshold_indel = args.readposranksum_threshold_indel
 readposranksum_threshold_snv = args.readposranksum_threshold_snv
 qd_threshold_indel = args.qd_threshold_indel
 qd_threshold_snv = args.qd_threshold_snv
+gq_threshold_homref_parent = args.gq_threshold_homref_parent
+gq_threshold_het_proband = args.gq_threshold_het_proband
 mq_threshold = args.mq_threshold
 
 cores = args.cores
@@ -246,30 +250,26 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
                         & (ab <= 0.80))
 
     else:
-        # GQ mean filters
-        mt = hl.variant_qc(mt)
-        mt = mt.filter_rows(mt.variant_qc.gq_stats.mean >= 50, keep = True)
-
         # parents filters - homozygous
         ab = mt.AD[1]/hl.sum(mt.AD)
         hom_snv_parents = (hl.is_snp(mt.alleles[0], mt.alleles[1])
                         & mt.GT.is_hom_ref()
-                        & (mt.GQ >= 30.0)
+                        & (mt.GQ >= gq_threshold_homref_parent)
                         & (ab <= 0.05))
         hom_indel_parents = (hl.is_indel(mt.alleles[0], mt.alleles[1])
                         & mt.GT.is_hom_ref()
                         & (mt.DPC >= 16)
-                        & (mt.GQ >= 30.0)
+                        & (mt.GQ >= gq_threshold_homref_parent)
                         & (ab <= 0.05))
         # child filters - heterzygous
         het_snv_cond = (hl.is_snp(mt.alleles[0], mt.alleles[1])
                         & mt.GT.is_het()
-                        & (mt.GQ >= 99.0)
+                        & (mt.GQ >= gq_threshold_het_proband)
                         & (ab >= 0.22)
                         & (ab <= 0.78))
         het_indel_cond = (hl.is_indel(mt.alleles[0], mt.alleles[1])
                         & mt.GT.is_het()
-                        & (mt.GQ >= 99.0)
+                        & (mt.GQ >= gq_threshold_het_proband)
                         & (ab >= 0.20)
                         & (ab <= 0.80))
 

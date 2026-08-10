@@ -30,6 +30,8 @@ workflow step1 {
         Float readposranksum_threshold_snv = -1.4
         Float qd_threshold_indel = 4.0
         Float qd_threshold_snv = 3.0
+        Float gq_threshold_homref_parent = 30.0
+        Float gq_threshold_het_proband = 99.0
         Float mq_threshold = 50
         Boolean filter_pass = true
         Boolean exclude_gq_filters = false
@@ -88,6 +90,8 @@ workflow step1 {
                     readposranksum_threshold_snv=readposranksum_threshold_snv,
                     qd_threshold_indel=qd_threshold_indel,
                     qd_threshold_snv=qd_threshold_snv,
+                    gq_threshold_homref_parent=gq_threshold_homref_parent,
+                    gq_threshold_het_proband=gq_threshold_het_proband,
                     mq_threshold=mq_threshold,
                     filter_pass=filter_pass,
                     exclude_gq_filters=exclude_gq_filters,
@@ -124,6 +128,8 @@ workflow step1 {
                     readposranksum_threshold_snv=readposranksum_threshold_snv,
                     qd_threshold_indel=qd_threshold_indel,
                     qd_threshold_snv=qd_threshold_snv,
+                    gq_threshold_homref_parent=gq_threshold_homref_parent,
+                    gq_threshold_het_proband=gq_threshold_het_proband,
                     mq_threshold=mq_threshold,
                     filter_pass=filter_pass,
                     exclude_gq_filters=exclude_gq_filters,
@@ -190,6 +196,8 @@ task preprocessVCF {
         Float readposranksum_threshold_snv
         Float qd_threshold_indel
         Float qd_threshold_snv
+        Float gq_threshold_homref_parent
+        Float gq_threshold_het_proband
         Float mq_threshold
         Boolean filter_pass
         Boolean exclude_gq_filters
@@ -244,6 +252,8 @@ task preprocessVCF {
         --readposranksum-threshold-snv ~{readposranksum_threshold_snv} \
         --qd-threshold-indel ~{qd_threshold_indel} \
         --qd-threshold-snv ~{qd_threshold_snv} \
+        --gq-threshold-homref-parent ~{gq_threshold_homref_parent} \
+        --gq-threshold-het-proband ~{gq_threshold_het_proband} \
         --mq-threshold ~{mq_threshold} \
         --cores ~{cpu_cores} \
         --memory ~{memory}
