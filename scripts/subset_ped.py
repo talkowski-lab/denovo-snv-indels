@@ -6,8 +6,13 @@ import os
 samples = sys.argv[1]
 ped_uri = sys.argv[2]
 
-ped = pd.read_csv(ped_uri, sep="\t", dtype={i: str for i in range(4)})#.iloc[:,:6]
-# ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
+ped = pd.read_csv(
+    ped_uri,
+    sep="\t",
+    dtype={i: str for i in range(4)},
+    usecols=list(range(6)),
+    names=['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype'],
+)
 samples = pd.read_csv(samples, header=None, dtype=str)[0]
 
 ped.index = ped.sample_id
