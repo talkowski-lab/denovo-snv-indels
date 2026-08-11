@@ -65,7 +65,9 @@ task finalFiltering {
         Int vqslod_cutoff_snv
         Int vqslod_cutoff_indel
         Int AD_alt_threshold
-        Float af_threshold
+        Float cohort_ac_threshold
+        Float cohort_af_threshold
+        Float gnomad_af_threshold
         Boolean single_variant
 
         File? final_filtering_script_override
@@ -105,7 +107,9 @@ task finalFiltering {
         --cohort-prefix ~{cohort_prefix} \
         --vqslod-cutoff-snv ~{vqslod_cutoff_snv} \
         --vqslod-cutoff-indel ~{vqslod_cutoff_indel} \
-        --af-threshold ~{af_threshold} \
+        --cohort-ac-threshold ~{cohort_ac_threshold} \
+        --cohort-af-threshold ~{cohort_af_threshold} \
+        --gnomad-af-threshold ~{gnomad_af_threshold} \
         --ad-alt-threshold ~{AD_alt_threshold} \
         --cores ~{cpu_cores} \
         --mem ~{memory} \

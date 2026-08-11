@@ -15,6 +15,9 @@ parser.add_argument("--de-novo-merged", required=True)
 parser.add_argument("--cohort-prefix", required=True)
 parser.add_argument("--vqslod-cutoff-snv", type=int, required=True)
 parser.add_argument("--vqslod-cutoff-indel", type=int, required=True)
+parser.add_argument("--cohort-ac-threshold", type=float, required=True)
+parser.add_argument("--cohort-af-threshold", type=float, required=True)
+parser.add_argument("--gnomad-af-threshold", type=float, required=True)
 parser.add_argument("--af-threshold", type=float, required=True)
 parser.add_argument("--ad-alt-threshold", type=int, required=True)
 parser.add_argument("--cores", required=True)
@@ -27,7 +30,9 @@ de_novo_merged = args.de_novo_merged
 cohort_prefix = args.cohort_prefix
 vqslod_cutoff_snv = args.vqslod_cutoff_snv
 vqslod_cutoff_indel = args.vqslod_cutoff_indel
-MAF_thresh = args.af_threshold
+cohort_ac_threshold = args.cohort_ac_threshold
+cohort_af_threshold = args.cohort_af_threshold
+gnomad_af_threshold = args.gnomad_af_threshold
 AD_alt_threshold = args.ad_alt_threshold
 cores = args.cores
 mem = int(np.floor(args.mem))
@@ -52,11 +57,11 @@ if 'VQSLOD' in df.columns:
 
 # Set frequency threshold
 
-# Filter on dataset AF
-df = df[df.cohort_AF<= MAF_thresh]
+# Filter on cohort AC and AF
+df = df[ (df.cohort_AC<=cohort_ac_threshold) | (df.cohort_AF<=cohort_af_threshold)]
 
-# Filter on gnomAD
-df = df[(df.gnomad_non_neuro_AF.isna())|(df.gnomad_non_neuro_AF<=MAF_thresh)]
+# Filter on gnomAD AF
+df = df[(df.gnomad_non_neuro_AF.isna())|(df.gnomad_non_neuro_AF<=gnomad_af_threshold)]
 
 # Filter on AD_alt
 df['proband_entry.AD_alt'] = df['proband_entry.AD'].apply(ast.literal_eval).str[1].astype(int)
