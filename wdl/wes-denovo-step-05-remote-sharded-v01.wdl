@@ -20,7 +20,9 @@ workflow step5 {
         Int vqslod_cutoff_snv = -20
         Int vqslod_cutoff_indel = -2
         Int AD_alt_threshold = 10
-        Float af_threshold = 0.005
+        Float cohort_ac_threshold = 2
+        Float cohort_af_threshold = 0.005
+        Float gnomad_af_threshold = 0.01
         Boolean single_variant = true
 
         File? final_filtering_script_override
@@ -36,7 +38,9 @@ workflow step5 {
         hail_docker=hail_docker,
         vqslod_cutoff_snv=vqslod_cutoff_snv,
         vqslod_cutoff_indel=vqslod_cutoff_indel,
-        af_threshold=af_threshold,
+        cohort_ac_threshold=cohort_ac_threshold,
+        cohort_af_threshold=cohort_af_threshold,
+        gnomad_af_threshold=gnomad_af_threshold,
         AD_alt_threshold=AD_alt_threshold,
         single_variant=single_variant,
         runtime_attr_override=runtime_attr_filter_final
