@@ -61,7 +61,8 @@ mt = mt.annotate_entries(is_hemi = ( (mt.locus.in_x_nonpar() & (mt.is_female == 
                                       mt.locus.in_y_nonpar() | mt.locus.in_mito() ))
 
 # Apply GQ 25 filter across the board
-mt = mt.filter_entries(mt.GQ >= 25, keep = True)
+# mt = mt.filter_entries(mt.GQ >= 25, keep = True)
+mt = mt.filter_entries(mt.GQ >= min_gq, keep = True)
 
 # AD missingness
 mt = mt.annotate_entries(AD = ( hl.case()
