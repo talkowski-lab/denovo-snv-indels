@@ -89,11 +89,17 @@ from hail.table import Table
 from hail.typecheck import typecheck, numeric
 from hail.methods.misc import require_biallelic
 
-tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
+tmp_ped = pd.read_csv(
+    ped_uri,
+    sep='\t',
+    dtype={i: str for i in range(4)},
+    usecols=list(range(6)),
+    names=['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype'],
+)
     
 # subset tmp_ped to samples in mt
 samps = mt.s.collect()
-tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
+tmp_ped = tmp_ped[tmp_ped['sample_id'].isin(samps)]  # sample_id
 tmp_ped = tmp_ped.drop_duplicates('sample_id')    
 
 fam_sizes = tmp_ped.family_id.value_counts().to_dict()

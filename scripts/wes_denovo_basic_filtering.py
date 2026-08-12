@@ -123,26 +123,24 @@ mt = mt.drop('variant_qc')
 # - Any call on the Y in females
 # - Any autosomal or PAR call in a male with depth less than 10
 # - Het calls in males in hemizygous regions
-tmp_ped = pd.read_csv(ped_uri, sep='\t')
-# check tmp_ped number of columns
-if len(tmp_ped.columns) > 6:
-    tmp_ped = tmp_ped.iloc[:,:6]
+tmp_ped = pd.read_csv(
+    ped_uri,
+    sep='\t',
+    dtype={i: str for i in range(4)},
+    usecols=list(range(6)),
+    names=['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype'],
+)
     
 # Get samples in both PED and MT
-samps = set(mt.s.collect()).intersection(tmp_ped.iloc[:,1])
+samps = set(mt.s.collect()).intersection(tmp_ped['sample_id'])
 
 # Subset PED to these samples
-tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
-tmp_ped = tmp_ped.drop_duplicates(tmp_ped.columns[1])
-tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
+tmp_ped = tmp_ped[tmp_ped['sample_id'].isin(samps)]  # sample_id
+tmp_ped = tmp_ped.drop_duplicates(tmp_ped['sample_id'])
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False, header=True)
 
 ped_uri_processed = f"{prefix}.ped"
 ped = hl.import_table(ped_uri_processed, impute=True, delimiter='\t')
-
-original_cols = list(ped.row.keys())
-new_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
-
-ped = ped.rename({old: new for old, new in zip(original_cols, new_cols)})
 
 ped = ped.key_by('sample_id')
 
