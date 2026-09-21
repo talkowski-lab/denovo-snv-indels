@@ -641,8 +641,6 @@ workflow filterUltraRareInheritedVariants {
                 input:
                     mt_uri=vcf_file,
                     input_size=getStep1InputMTSize.mt_size,
-                    ped_sex_qc=ped_sex_qc,
-                    mpc_ht_uri=mpc_ht_uri,
                     gnomad_ht_uri=gnomad_ht_uri,
                     bucket_id=bucket_id,
                     cohort_prefix=cohort_prefix,
